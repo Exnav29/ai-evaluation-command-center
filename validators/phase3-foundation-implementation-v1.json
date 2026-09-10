@@ -1,0 +1,77 @@
+{
+  "description": "Structural and verification contract for the first implementation qualification benchmark. This validator defines what the implementation runner must preserve and verify; it does not replace human rubric scoring.",
+  "benchmark": "phase3-foundation-implementation-v1",
+  "deliverable_type": "repository_changes",
+  "required_path_groups": [
+    {
+      "name": "python_project_config",
+      "patterns": ["pyproject.toml"]
+    },
+    {
+      "name": "application_source",
+      "patterns": ["src/**/*.py", "aecc/**/*.py", "app/**/*.py"]
+    },
+    {
+      "name": "alembic_config",
+      "patterns": ["alembic.ini"]
+    },
+    {
+      "name": "alembic_migration",
+      "patterns": ["alembic/versions/*.py", "migrations/versions/*.py"]
+    },
+    {
+      "name": "pytest_tests",
+      "patterns": ["tests/test_*.py", "tests/**/*_test.py"]
+    }
+  ],
+  "forbidden_changed_paths": [
+    "docs/ARCHITECTURE_BASELINE_V1.md",
+    "docs/IMPLEMENTATION_FOUNDATION_V1_SPEC.md",
+    "docs/IMPLEMENTATION_RUBRIC_V1.md",
+    "prompts/phase3-foundation-implementation-v1.txt",
+    "validators/phase3-foundation-implementation-v1.json",
+    "scripts/run_benchmark.py",
+    "opencode.jsonc"
+  ],
+  "verification_commands": [
+    "python -m pytest -q"
+  ],
+  "verification_timeout_seconds": 180,
+  "required_test_behaviors": [
+    "alembic_creates_schema_from_empty_database",
+    "sqlite_foreign_keys_enforced",
+    "sqlite_wal_enabled_for_file_database",
+    "registered_test_version_update_rejected",
+    "registered_test_version_delete_rejected",
+    "correction_creates_new_version",
+    "retry_attempts_preserved",
+    "duplicate_attempt_number_rejected",
+    "sealed_attempt_update_rejected",
+    "sealed_attempt_delete_rejected",
+    "score_revision_history_preserved",
+    "qualification_requires_harness_model_capability",
+    "qualification_history_preserved",
+    "unknown_distinct_from_pass",
+    "process_success_can_coexist_with_task_failure",
+    "intervention_and_exclusion_history_retained"
+  ],
+  "evidence_to_preserve": [
+    "model_response",
+    "git_status_after",
+    "git_diff_binary",
+    "changed_file_list",
+    "untracked_file_list",
+    "final_workspace_archive",
+    "verification_stdout_stderr",
+    "verification_exit_code",
+    "process_exit_code",
+    "elapsed_seconds",
+    "first_process_output_seconds",
+    "permission_denial",
+    "human_intervention",
+    "source_commit",
+    "evaluator_commit"
+  ],
+  "task_success_rule": "Process exit code alone is insufficient. A repository deliverable must be present, forbidden benchmark files must be unchanged, and independent verification must pass before the task can be marked ready for scoring as a successful implementation candidate.",
+  "execution_gate": "DO_NOT_RUN_WRITE_CAPABLE_ON_SHARED_VPS_UNTIL_CONTAINMENT_VERIFIED"
+}
