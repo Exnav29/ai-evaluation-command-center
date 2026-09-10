@@ -96,7 +96,7 @@ def main() -> int:
     base.require_image(args.image)
     base.require_podman_object("network", args.network)
     base.require_podman_object("container", args.proxy)
-    if base.command_output(["podman", "info", "--format", "{{.Host.Security.Rootless}}"]]).lower() != "true":
+    if base.command_output(["podman", "info", "--format", "{{.Host.Security.Rootless}}" ]).lower() != "true":
         print("ERROR: Podman is not rootless.")
         return 2
     if base.command_output(["podman", "inspect", "-f", "{{.State.Running}}", args.proxy]).lower() != "true":
