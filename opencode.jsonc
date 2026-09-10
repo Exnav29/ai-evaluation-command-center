@@ -1,0 +1,40 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+
+  // Evaluation uses OpenCode Zen only.
+  "enabled_providers": ["opencode"],
+
+  // Free baseline model.
+  "model": "opencode/nemotron-3-ultra-free",
+
+  // Prevent background/lightweight tasks from silently using a paid model.
+  "small_model": "opencode/nemotron-3.5-lightning-free",
+
+  // Evaluation conversations are not to be shared through OpenCode.
+  "share": "disabled",
+
+  "permission": {
+    "*": "ask",
+
+    // Phase 1 boundary:
+    // OpenCode must not inspect Product Studio or other directories.
+    "external_directory": "deny",
+
+    "read": {
+      "*": "allow",
+      "*.env": "deny",
+      "*.env.*": "deny",
+      "*.env.example": "allow"
+    },
+
+    // It may build things INSIDE opencode-eval.
+    "edit": "allow",
+
+    // Shell activity still requires us to approve it during qualification.
+    "bash": "ask",
+
+    "task": "ask",
+    "webfetch": "ask",
+    "websearch": "ask"
+  }
+}

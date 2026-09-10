@@ -1,0 +1,21 @@
+# Runtime evaluation evidence
+data/*.sqlite
+data/*.sqlite-*
+runs/*
+!runs/.gitkeep
+
+# Generated exports
+exports/public/*
+exports/stakeholder/*
+
+# Environment/secrets
+.env
+.env.*
+!.env.example
+
+# Common build artifacts
+node_modules/
+.next/
+dist/
+__pycache__/
+*.pyc
