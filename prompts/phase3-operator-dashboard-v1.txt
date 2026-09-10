@@ -1,0 +1,73 @@
+This is the Phase 3 Operator Dashboard V1 implementation qualification benchmark.
+
+Work only inside this repository snapshot.
+
+Read and follow:
+- docs/ARCHITECTURE_BASELINE_V1.md
+- docs/OPERATOR_DASHBOARD_V1_SPEC.md
+- docs/OPERATOR_DASHBOARD_V1_RUBRIC.md
+- docs/TOOL_SKILL_SUBAGENT_EVALUATION_V1.md
+
+Build the first real Operator-facing dashboard on top of the existing Phase 2 evidence foundation.
+
+Required stack:
+- Python
+- FastAPI
+- Jinja2
+- server-rendered HTML
+- SQLite through the existing SQLAlchemy foundation
+- pytest
+
+Required routes:
+- GET /operator
+- GET /operator/runs/{run_id}
+- GET /operator/qualifications
+
+The dashboard must query persisted evidence. Do not build a static mockup or hard-code production route data.
+
+Preserve evidence semantics:
+- UNKNOWN must remain distinct from PASS/success;
+- process outcome, deliverable outcome, task outcome, and evaluator verdict remain separate;
+- exit code 0 is not proof of task success;
+- missing cost/tokens are unknown/not recorded, not zero;
+- latest score and qualification decisions must be selected deterministically while history remains visible;
+- qualification is specific to harness + model + capability;
+- excluded/intervention evidence remains inspectable.
+
+Provide deterministic seed/test data exercising both success and failure/unknown/history cases described in the spec.
+
+Use available skills and subagents only when they materially help. Tool volume is not a goal. If you delegate, give the subagent a bounded task, integrate the result, and verify consequential claims. If an optional tool/skill/subagent is denied or unavailable, recover and continue when possible.
+
+Do NOT modify:
+- docs/ARCHITECTURE_BASELINE_V1.md
+- docs/IMPLEMENTATION_FOUNDATION_V1_SPEC.md
+- docs/IMPLEMENTATION_RUBRIC_V1.md
+- docs/OPERATOR_DASHBOARD_V1_SPEC.md
+- docs/OPERATOR_DASHBOARD_V1_RUBRIC.md
+- docs/TOOL_SKILL_SUBAGENT_EVALUATION_V1.md
+- prompts/phase3-operator-dashboard-v1.txt
+- validators/phase3-operator-dashboard-v1.json
+- prior benchmark freeze manifests
+- scripts/run_benchmark.py
+- scripts/run_implementation_benchmark.py
+- opencode.jsonc
+
+Do not access or modify any external repository, including ~/work/product-studio-ops.
+
+Do not implement queue/worker execution, model invocation, containment/egress controls, authentication, Stakeholder/Public portals, deployment services, or Product Studio integration.
+
+Run the full test suite from repository root with:
+
+python -m pytest -q
+
+At least 15 meaningful dashboard-specific tests must be added, and all existing Phase 2 foundation tests must continue to pass.
+
+At the end, return a concise implementation report stating:
+1. what you implemented;
+2. important files added or changed;
+3. routes implemented;
+4. the exact test command and result;
+5. skills/subagents used and why, or state that none were needed;
+6. any unresolved issue or assumption.
+
+Do not claim success if tests did not pass.
