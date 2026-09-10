@@ -1,0 +1,20 @@
+{
+  "description": "Structural presence check only. Passing means a planning deliverable exists and is ready for human scoring; it does not mean the plan is correct.",
+  "min_response_chars": 2500,
+  "minimum_groups_matched": 10,
+  "required_term_groups": [
+    ["technology stack", "recommended technology"],
+    ["architecture", "application architecture"],
+    ["database", "data model"],
+    ["worker", "job execution", "evaluation job"],
+    ["operator", "stakeholder", "public"],
+    ["security", "authorization", "authentication"],
+    ["publication", "sanitization"],
+    ["navigation", "page structure", "pages"],
+    ["visualization", "charts"],
+    ["testing", "verification"],
+    ["implementation sequence", "phased implementation", "phases"],
+    ["risks", "tradeoffs"],
+    ["assumptions", "unresolved questions"]
+  ]
+}
