@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block title %}Operator Overview · AECC{% endblock %}
+{% block content %}
+<h1>Operator Overview</h1>
+<p class="lede">Recent evaluation runs with latest verdict, cost, and qualification state. All figures are derived from persisted evidence.</p>
+
+<section aria-labelledby="summary-heading">
+  <h2 id="summary-heading">Summary</h2>
+  <div class="cards">
+    <div class="card">
+      <span class="card-label">Total runs</span>
+      <span class="card-value" data-testid="summary-total">{{ summary.total_runs }}</span>
+    </div>
+    <div class="card">
+      <span class="card-label">Needs review / failing verdict</span>
+      <span class="card-value" data-testid="summary-review">{{ summary.needs_review_or_failing }}</span>
+    </div>
+    <div class="card">
+      <span class="card-label">Qualified combinations</span>
+      <span class="card-value" data-testid="summary-qualified">{{ summary.qualified_triples }}</span>
+    </div>
+    <div class="card">
+      <span class="card-label">UNKNOWN / unscored runs</span>
+      <span class="card-value" data-testid="summary-unknown">{{ summary.unknown_or_unscored }}</span>
+    </div>
+  </div>
+</section>
+
+<section aria-labelledby="runs-heading">
+  <h2 id="runs-heading">Recent runs</h2>
+  {% if rows %}
+  <div class="table-wrap">
+  <table>
+    <caption class="visually-hidden">Recent evaluation runs, newest first</caption>
+    <thead>
+      <tr>
+        <th scope="col">Run</th>
+        <th scope="col">Test</th>
+        <th scope="col">Model (exact identifier)</th>
+        <th scope="col">Harness</th>
+        <th scope="col">Capability</th>
+        <th scope="col">Run state</th>
+        <th scope="col">Latest verdict / score</th>
+        <th scope="col">Elapsed</th>
+        <th scope="col">Tokens in/out</th>
+        <th scope="col">Cost</th>
+        <th scope="col">Flags</th>
+        <th scope="col">Qualification</th>
+        <th scope="col">Detail</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in rows %}
+      <tr data-run-id="{{ row.run.id }}">
+        <td>#{{ row.run.id }}</td>
+        <td>{{ row.logical_test.name if row.logical_test else row.test_version.capability_key if row.test_version else "—" }}</td>
+        <td class="mono break">{{ row.model.exact_identifier if row.model else "—" }}</td>
+        <td class="mono">{{ row.harness.harness_key if row.harness else "—" }}{% if row.harness and row.harness.version %} {{ row.harness.version }}{% endif %}</td>
+        <td class="mono">{{ row.capability.capability_key if row.capability else "—" }} {{ row.capability.version if row.capability else "" }}</td>
+        <td><span class="badge {{ badge_class("runstate", row.run.state.value if row.run.state else none) }}">{{ row.run.state.value if row.run.state else "UNKNOWN" }}</span></td>
+        <td>
+          {% if row.latest_score %}
+          <span class="badge {{ badge_class("verdict", row.latest_score.verdict.value) }}">{{ row.latest_score.verdict.value }}</span>
+          {% if row.latest_score.total_score is not none %}<span class="score"> {{ "%.2f"|format(row.latest_score.total_score) }}</span>{% endif %}
+          {% else %}
+          <span class="badge badge-unknown">UNKNOWN</span> <span class="muted">Not scored</span>
+          {% endif %}
+        </td>
+        <td>{{ format_elapsed(row.latest_attempt.elapsed_seconds if row.latest_attempt else none) }}</td>
+        <td>
+          {% if row.latest_attempt %}
+          {{ format_tokens(row.latest_attempt.tokens_input) }} / {{ format_tokens(row.latest_attempt.tokens_output) }}
+          {% else %}
+          Not recorded / Not recorded
+          {% endif %}
+        </td>
+        <td title="{{ format_cost_title(row.latest_attempt.cost if row.latest_attempt else none, row.latest_attempt.cost_source if row.latest_attempt else none) }}">{{ format_cost(row.latest_attempt.cost if row.latest_attempt else none) }}</td>
+        <td>
+          {% if row.has_permission_denial %}<span class="badge badge-review">permission-denied</span>{% endif %}
+          {% if row.has_intervention %}<span class="badge badge-review">intervention</span>{% endif %}
+          {% if row.exclusions %}<span class="badge badge-excluded">excluded</span>{% endif %}
+          {% if not row.has_permission_denial and not row.has_intervention and not row.exclusions %}<span class="muted">—</span>{% endif %}
+        </td>
+        <td>
+          {% if row.qual_current %}
+          <span class="badge {{ badge_class("qual", row.qual_current.state.value) }}">{{ row.qual_current.state.value }}</span>
+          {% else %}
+          <span class="badge badge-unknown">UNKNOWN</span>
+          {% endif %}
+        </td>
+        <td><a href="/operator/runs/{{ row.run.id }}">Inspect run #{{ row.run.id }}</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% else %}
+  <p>No runs recorded yet.</p>
+  {% endif %}
+</section>
+{% endblock %}
