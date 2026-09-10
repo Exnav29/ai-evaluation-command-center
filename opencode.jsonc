@@ -33,6 +33,10 @@
     // Shell activity still requires us to approve it during qualification.
     "bash": "ask",
 
+    "skill": {
+      "*": "allow"
+    },
+
     "task": "ask",
     "webfetch": "ask",
     "websearch": "ask"
