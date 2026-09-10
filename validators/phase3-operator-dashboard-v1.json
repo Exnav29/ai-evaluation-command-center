@@ -1,0 +1,111 @@
+{
+  "description": "Structural, behavioral, and tooling-evidence contract for Product Phase 3 Operator Dashboard V1.",
+  "benchmark": "phase3-operator-dashboard-v1",
+  "capability": "operator_dashboard_web_engineering",
+  "deliverable_type": "repository_changes",
+  "required_path_groups": [
+    {
+      "name": "python_project_config",
+      "patterns": ["pyproject.toml"]
+    },
+    {
+      "name": "web_application_source",
+      "patterns": ["src/aecc/web.py", "src/aecc/app.py", "src/aecc/**/*dashboard*.py", "src/aecc/**/*web*.py"]
+    },
+    {
+      "name": "jinja_templates",
+      "patterns": ["src/aecc/templates/**/*.html", "templates/**/*.html"]
+    },
+    {
+      "name": "static_assets",
+      "patterns": ["src/aecc/static/**/*.css", "static/**/*.css"]
+    },
+    {
+      "name": "dashboard_tests",
+      "patterns": ["tests/test_*dashboard*.py", "tests/test_*operator*.py", "tests/**/*dashboard*_test.py"]
+    }
+  ],
+  "forbidden_changed_paths": [
+    "docs/ARCHITECTURE_BASELINE_V1.md",
+    "docs/IMPLEMENTATION_FOUNDATION_V1_SPEC.md",
+    "docs/IMPLEMENTATION_RUBRIC_V1.md",
+    "docs/OPERATOR_DASHBOARD_V1_SPEC.md",
+    "docs/OPERATOR_DASHBOARD_V1_RUBRIC.md",
+    "docs/TOOL_SKILL_SUBAGENT_EVALUATION_V1.md",
+    "prompts/phase3-operator-dashboard-v1.txt",
+    "validators/phase3-operator-dashboard-v1.json",
+    "scripts/run_benchmark.py",
+    "scripts/run_implementation_benchmark.py",
+    "opencode.jsonc"
+  ],
+  "forbidden_changed_globs": [
+    "benchmarks/*/FREEZE.json"
+  ],
+  "required_routes": [
+    "/operator",
+    "/operator/runs/{run_id}",
+    "/operator/qualifications"
+  ],
+  "verification_commands": [
+    "python -m pytest -q"
+  ],
+  "verification_timeout_seconds": 240,
+  "minimum_dashboard_specific_tests": 15,
+  "required_test_behaviors": [
+    "operator_overview_returns_200",
+    "qualification_overview_returns_200",
+    "known_run_detail_returns_200",
+    "unknown_run_returns_404",
+    "recent_runs_newest_first",
+    "exact_model_harness_capability_rendered",
+    "latest_score_selected_and_history_preserved",
+    "qualification_current_state_is_triple_keyed_and_history_preserved",
+    "process_success_task_failure_not_presented_as_pass",
+    "unknown_not_presented_as_pass",
+    "missing_cost_distinct_from_zero_cost",
+    "missing_tokens_distinct_from_zero_tokens",
+    "permission_denial_rendered_from_evidence",
+    "human_intervention_rendered_from_evidence",
+    "run_detail_renders_attempts_and_history",
+    "qualification_evidence_drillthrough_available",
+    "navigation_and_semantic_html_present",
+    "phase2_foundation_tests_continue_to_pass"
+  ],
+  "tooling_evidence_to_preserve": [
+    "effective_main_model",
+    "effective_small_model",
+    "skill_invocation_names_and_count_when_observable",
+    "subagent_task_invocations_and_agent_identity_when_observable",
+    "subagent_effective_model_when_observable",
+    "failed_tool_calls_when_observable",
+    "permission_denials",
+    "verification_commands",
+    "candidate_model_call_count_when_observable",
+    "input_output_tokens_when_observable",
+    "actual_cost_when_observable"
+  ],
+  "evidence_to_preserve": [
+    "model_response",
+    "git_status_after",
+    "git_diff_binary",
+    "changed_file_list",
+    "untracked_file_list",
+    "final_workspace_archive",
+    "final_workspace_archive_sha256",
+    "verification_stdout_stderr",
+    "verification_exit_code",
+    "process_exit_code",
+    "elapsed_seconds",
+    "first_process_output_seconds",
+    "permission_denial",
+    "human_intervention",
+    "source_commit",
+    "evaluator_commit",
+    "benchmark_image_id",
+    "proxy_log_before_after",
+    "tool_skill_subagent_observation"
+  ],
+  "single_model_attribution_rule": "All model-bearing work in a single-model run must be attributable to the candidate model. The evaluator must runtime-override both main model and small_model to the candidate. Built-in subagents without explicit model overrides inherit the parent candidate model. Any observed different-model delegated/background execution must be recorded as MIXED_MODEL_EXECUTION or ATTRIBUTION_UNKNOWN and disqualifies the run as clean single-model qualification evidence.",
+  "task_success_rule": "Process exit code alone is insufficient. Required routes/assets/tests must be present, forbidden methodology files must remain unchanged, and independent offline pytest verification must pass before the task can be marked ready for scoring.",
+  "execution_gate": "WRITE_CAPABLE_EXECUTION_REQUIRES_VERIFIED_ROOTLESS_CONTAINMENT_AND_RESTRICTED_PROVIDER_EGRESS"
+}
