@@ -1,0 +1,72 @@
+{
+  "benchmark": "phase3-foundation-implementation-v1",
+  "frozen_at_utc": "2026-09-10T16:11:00Z",
+  "status": "FROZEN_EXECUTION_BLOCKED_PENDING_CONTAINMENT",
+  "subject_source_commit": "af395e4d65fa377b62f04402d499dc93f6ca8cf5",
+  "subject_files": [
+    "docs/ARCHITECTURE_BASELINE_V1.md",
+    "docs/IMPLEMENTATION_FOUNDATION_V1_SPEC.md",
+    "docs/IMPLEMENTATION_RUBRIC_V1.md",
+    "prompts/phase3-foundation-implementation-v1.txt",
+    "validators/phase3-foundation-implementation-v1.json",
+    "skills-lock.json",
+    "opencode.jsonc"
+  ],
+  "capability": "backend_database_engineering",
+  "harness_initial": "opencode",
+  "initial_competitors": [
+    "opencode/muse-spark-1-3",
+    "opencode/mimo-v2.5-free"
+  ],
+  "competitor_note": "Use the exact provider/model identifiers available at execution time and record them in run evidence. If an identifier differs from this planning label, do not silently substitute it; record the exact executed identifier.",
+  "timeout_seconds": 1800,
+  "automatic_retries": 0,
+  "retry_policy": "No automatic retry. Any rerun is a new preserved attempt and must have an explicit reason. Infrastructure failures remain evidence and are distinguished from model/harness/task failure.",
+  "human_intervention_policy": "No implementation assistance. Do not answer model questions, repair code, or approve one model's optional tool request differently from another. Harness/evaluator setup actions are recorded separately from model assistance.",
+  "execution_permission_profile": {
+    "name": "WORKSPACE_WRITE_AND_SHELL_CONTAINED",
+    "required": true,
+    "opencode_mode": "run --auto",
+    "reason": "Implementation requires edits and shell access for tests. Auto mode removes interactive approval variance while explicit deny rules remain enforced.",
+    "external_directory": "deny",
+    "network": "restricted_to_approved_model_provider_egress",
+    "public_inbound": "deny",
+    "host_home_mount": "deny",
+    "product_studio_mount": "deny",
+    "container_engine_socket_mount": "deny"
+  },
+  "containment_gate": {
+    "required_before_execution": true,
+    "minimum": "Verified disposable OS/container isolation satisfying ARCHITECTURE_BASELINE_V1 execution-containment tests.",
+    "shared_vps_uncontained_execution": "PROHIBITED"
+  },
+  "required_evaluator_evidence": [
+    "subject commit",
+    "evaluator commit",
+    "exact model identifier",
+    "exact harness version",
+    "model response",
+    "elapsed time",
+    "first process output",
+    "process exit code",
+    "permission denial",
+    "human intervention",
+    "git status after",
+    "binary git diff",
+    "changed files",
+    "untracked files",
+    "final workspace archive and hash",
+    "independent pytest output",
+    "independent pytest exit code",
+    "deliverable status",
+    "task status",
+    "failure classification",
+    "score and rubric version"
+  ],
+  "independent_verification_command": "python -m pytest -q",
+  "scoring_rubric": "docs/IMPLEMENTATION_RUBRIC_V1.md",
+  "task_specification": "docs/IMPLEMENTATION_FOUNDATION_V1_SPEC.md",
+  "prompt": "prompts/phase3-foundation-implementation-v1.txt",
+  "validator_contract": "validators/phase3-foundation-implementation-v1.json",
+  "freeze_rule": "Do not change the subject_source_commit, task, prompt, rubric, or validator between competitors. Any methodology change creates a new benchmark version rather than silently changing V1."
+}
