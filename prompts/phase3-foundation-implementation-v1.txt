@@ -1,0 +1,67 @@
+This is an implementation qualification benchmark.
+
+Work only inside this repository snapshot.
+
+Read and follow:
+- docs/ARCHITECTURE_BASELINE_V1.md
+- docs/IMPLEMENTATION_FOUNDATION_V1_SPEC.md
+- docs/IMPLEMENTATION_RUBRIC_V1.md
+
+Implement the database/evidence foundation described in the benchmark specification.
+
+Required stack:
+- Python
+- SQLAlchemy 2.x
+- Alembic
+- SQLite
+- pytest
+
+You must produce working repository code, an Alembic migration, and automated tests.
+
+Keep the implementation narrowly inside this vertical slice.
+
+Do NOT implement:
+- FastAPI routes or web UI;
+- queue/worker execution;
+- model invocation;
+- container/Podman containment;
+- network egress controls;
+- Stakeholder/Public projection databases;
+- authentication;
+- charts;
+- systemd/deployment services;
+- Product Studio integration.
+
+Do NOT modify:
+- docs/ARCHITECTURE_BASELINE_V1.md
+- docs/IMPLEMENTATION_FOUNDATION_V1_SPEC.md
+- docs/IMPLEMENTATION_RUBRIC_V1.md
+- prompts/phase3-foundation-implementation-v1.txt
+- validators/phase3-foundation-implementation-v1.json
+- scripts/run_benchmark.py
+- opencode.jsonc
+
+Do not access or modify any external directory, including ~/work/product-studio-ops.
+
+Important evidence rules:
+- registered test versions must be immutable with database-level enforcement;
+- retries must remain separate attempts;
+- process outcome, deliverable outcome, task outcome, and evaluator verdict must remain separate;
+- exit code 0 does not prove task success;
+- UNKNOWN must remain distinct from PASS;
+- qualification must require harness + model + capability;
+- sealed evidence and historical revisions/events must not be silently rewritten.
+
+Run the test suite from the repository root with:
+
+python -m pytest -q
+
+If a requested optional tool is denied, recover and continue using available tools when possible. Do not abandon the task merely because an optional planning/task-list tool is unavailable.
+
+At the end, return a concise implementation report stating:
+1. what you implemented;
+2. important files added or changed;
+3. the exact test command and result;
+4. any unresolved issue or assumption.
+
+Do not claim success if tests did not pass.
