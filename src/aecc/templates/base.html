@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{% block title %}AECC Operator Dashboard{% endblock %}</title>
+  <link rel="stylesheet" href="/static/css/dashboard.css" />
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to main content</a>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <span class="brand">AECC · Operator</span>
+      <nav aria-label="Operator navigation">
+        <ul class="nav-list">
+          <li><a href="/operator" {% if active == "overview" %}aria-current="page" class="active"{% endif %}>Overview</a></li>
+          <li><a href="/operator/qualifications" {% if active == "qualifications" %}aria-current="page" class="active"{% endif %}>Qualifications</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+  <main id="main" class="container">
+    {% block content %}{% endblock %}
+  </main>
+  <footer class="footer">
+    <p>Operator evidence views query persisted evaluation data. UNKNOWN means unknown — never pass. Exit code 0 is not proof of task success.</p>
+  </footer>
+</body>
+</html>
