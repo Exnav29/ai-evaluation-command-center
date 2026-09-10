@@ -1,0 +1,32 @@
+This is a planning benchmark. Do not modify any files.
+
+Read:
+- docs/COMMAND_CENTER_V1_SPEC.md
+- docs/PLANNING_RUBRIC_V1.md
+
+Use the relevant skills available in this project.
+
+Produce an implementation plan for Evaluation Command Center V1.
+
+Your plan must include:
+1. your recommended technology stack and why;
+2. application architecture and boundaries;
+3. database/data model;
+4. evaluation job execution architecture;
+5. Operator, Stakeholder, and Public access design;
+6. security model;
+7. publication/sanitization design;
+8. page and navigation structure;
+9. visualization strategy;
+10. testing and verification strategy;
+11. phased implementation sequence;
+12. major risks and tradeoffs;
+13. assumptions or unresolved questions.
+
+Stay within V1 scope.
+
+Do not write implementation code.
+Do not modify files.
+Do not claim the application exists.
+
+Return only the planning deliverable.
