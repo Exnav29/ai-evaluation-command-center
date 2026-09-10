@@ -19,3 +19,44 @@ node_modules/
 dist/
 __pycache__/
 *.pyc
+
+# ============================================================
+# Evaluation runtime evidence - NEVER COMMIT
+# ============================================================
+
+# Evaluation databases
+data/*.sqlite
+data/*.sqlite-*
+data/*.db
+data/*.db-*
+
+# Individual evaluation runs
+runs/**
+!runs/.gitkeep
+
+# Raw model/harness artifacts
+artifacts/**
+!artifacts/.gitkeep
+
+# Private publication layers
+exports/stakeholder/**
+exports/private/**
+
+# Runtime logs
+logs/**
+*.log
+
+# Credentials and secrets
+*.pem
+*.key
+credentials/
+secrets/
+
+# Runtime/browser state
+.agent-browser/
+playwright-report/
+test-results/
+
+# VPS/local overrides
+*.local
+config/local.*
