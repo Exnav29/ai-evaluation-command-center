@@ -419,8 +419,32 @@ def create_app(engine=None) -> FastAPI:
         detail = queries.fetch_run_detail(session, run_id)
         if detail is None:
             raise HTTPException(status_code=404, detail=f"run {run_id} not found")
+        # Deterministic per-run evidence classification for the comparison /
+        # qualification milestone (no extra queries; derived from the detail
+        # bundle so drill-down stays consistent with compare/qualification).
+        from aecc.qualification import RunEvidence, classify_run
+
+        latest = detail.get("latest_score")
+        latest_a = detail.get("latest_attempt")
+        run = detail["run"]
+        evidence_category = classify_run(
+            RunEvidence(
+                run_id=run.id,
+                verdict=latest.verdict.value if latest is not None and latest.verdict is not None else None,
+                run_state=run.state.value if run.state is not None else None,
+                failure_primary=(
+                    latest_a.failure_primary.value
+                    if latest_a is not None and latest_a.failure_primary is not None
+                    else None
+                ),
+                has_intervention=bool(detail.get("has_intervention")),
+                has_permission_denial=bool(detail.get("has_permission_denial")),
+                has_exclusion=bool(detail.get("exclusions")),
+                is_demo=bool(run.is_demo),
+            )
+        ).category
         return templates.TemplateResponse(
-            request, "run_detail.html", {"detail": detail, "active": "runs"}
+            request, "run_detail.html", {"detail": detail, "evidence_category": evidence_category, "active": "runs"}
         )
 
     @app.get("/operator/qualifications", response_class=HTMLResponse)
@@ -430,6 +454,104 @@ def create_app(engine=None) -> FastAPI:
             request,
             "qualifications.html",
             {"triples": triples, "active": "qualifications"},
+        )
+
+    @app.get("/operator/qualification", response_class=HTMLResponse)
+    def computed_qualification(request: Request, session: Session = Depends(get_session)):
+        """Deterministic computed qualification per triple with why-reasons.
+
+        Reads completed evidence only; demo rows are excluded from real
+        qualification and no LLM is involved.
+        """
+        triples = queries.fetch_computed_qualifications(session)
+        return templates.TemplateResponse(
+            request,
+            "qualification.html",
+            {"triples": triples, "active": "qualification"},
+        )
+
+    @app.get("/operator/compare", response_class=HTMLResponse)
+    def compare(request: Request, session: Session = Depends(get_session)):
+        """Side-by-side comparison of completed evidence in one test context."""
+        from aecc.qualification import assess_triple
+
+        params = request.query_params
+        capability_id = None
+        test_version_id = None
+        raw_cap = params.get("capability_id")
+        raw_tv = params.get("test_version_id")
+        if raw_cap:
+            try:
+                capability_id = int(raw_cap)
+            except ValueError:
+                raise HTTPException(status_code=400, detail="capability_id must be an integer")
+            if session.get(Capability, capability_id) is None:
+                raise HTTPException(status_code=404, detail="capability not found")
+        if raw_tv:
+            try:
+                test_version_id = int(raw_tv)
+            except ValueError:
+                raise HTTPException(status_code=400, detail="test_version_id must be an integer")
+            if session.get(TestVersion, test_version_id) is None:
+                raise HTTPException(status_code=404, detail="test version not found")
+
+        contexts = queries.fetch_compare_contexts(session)
+        rows = queries.fetch_compare_rows(
+            session, capability_id=capability_id, test_version_id=test_version_id
+        )
+
+        # Computed assessment per exact test context represented in this view,
+        # derived deterministically from the displayed evidence (demo rows set
+        # aside). Grouping preserves harness+model+capability+test_version so
+        # different logical tests or materially different definitions never
+        # silently blend into one qualification.
+        by_group: dict[tuple[int, int, int, int], list[dict]] = {}
+        for row in rows:
+            run = row["run"]
+            by_group.setdefault((run.harness_id, run.model_id, run.capability_id, run.test_version_id), []).append(row)
+        assessments: list[dict] = []
+        for group, group_rows in by_group.items():
+            ordered = sorted(group_rows, key=lambda r: r["run"].id)
+            assessment = assess_triple([r["evidence"] for r in ordered])
+            first = ordered[0]
+            assessments.append(
+                {
+                    "triple": group[:3],
+                    "group": group,
+                    "harness": first["harness"],
+                    "model": first["model"],
+                    "capability": first["capability"],
+                    "test_version": first["test_version"],
+                    "logical_test": first["logical_test"],
+                    "assessment": assessment,
+                }
+            )
+
+        def _sort_key(a: dict) -> tuple:
+            h, m, c = a["harness"], a["model"], a["capability"]
+            tv = a.get("test_version")
+            lt = a.get("logical_test")
+            return (
+                h.harness_key if h is not None else "",
+                m.model_key if m is not None else "",
+                c.capability_key if c is not None else "",
+                c.version if c is not None and c.version else "",
+                lt.key if lt is not None else "",
+                tv.version_number if tv is not None else 0,
+            )
+
+        assessments.sort(key=_sort_key)
+        return templates.TemplateResponse(
+            request,
+            "compare.html",
+            {
+                "rows": rows,
+                "assessments": assessments,
+                "contexts": contexts,
+                "selected_capability_id": capability_id,
+                "selected_test_version_id": test_version_id,
+                "active": "compare",
+            },
         )
 
     # ---- Capability Catalog ----

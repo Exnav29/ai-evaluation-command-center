@@ -122,4 +122,31 @@ def badge_class(kind: str, value: str | None) -> str:
         if v in ("QUEUED", "CLAIMED", "RUNNING", "SCORING"):
             return "badge-progress"
         return "badge-unknown"
+    if kind == "computed":
+        # Deterministic computed qualification states. UNKNOWN-adjacent
+        # (INSUFFICIENT_EVIDENCE) is never styled as success.
+        return {
+            "QUALIFIED_AUTONOMOUS": "badge-pass",
+            "QUALIFIED — AUTONOMOUS": "badge-pass",
+            "QUALIFIED_REVIEW_REQUIRED": "badge-review",
+            "QUALIFIED — REVIEW REQUIRED": "badge-review",
+            "QUALIFIED_ESCALATE_ON_CONDITIONS": "badge-review",
+            "QUALIFIED — ESCALATE ON CONDITIONS": "badge-review",
+            "PROVISIONALLY_QUALIFIED": "badge-neutral",
+            "PROVISIONALLY QUALIFIED": "badge-neutral",
+            "INSUFFICIENT_EVIDENCE": "badge-unknown",
+            "INSUFFICIENT EVIDENCE": "badge-unknown",
+            "NOT_QUALIFIED": "badge-fail",
+            "NOT QUALIFIED": "badge-fail",
+        }.get(v, "badge-unknown")
+    if kind == "evidence":
+        return {
+            "PASS": "badge-pass",
+            "PASS_WITH_FINDINGS": "badge-pass-findings",
+            "NEEDS_REVIEW": "badge-review",
+            "FAIL": "badge-fail",
+            "UNKNOWN": "badge-unknown",
+            "INFRASTRUCTURE": "badge-infra",
+            "EXCLUDED": "badge-excluded",
+        }.get(v, "badge-unknown")
     return "badge-unknown"

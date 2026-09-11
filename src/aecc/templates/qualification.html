@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block title %}Qualification · AECC Operator{% endblock %}
+{% block content %}
+<h1>Qualification</h1>
+<p class="lede">Deterministic computed qualification per exact harness + model + capability + test version, derived from completed evaluation evidence. No LLM is involved: the same evidence always yields the same state. Operator-recorded decision history remains on the <a href="/operator/qualifications">Qualification board</a>.</p>
+<p class="note">Rules: UNKNOWN is never a pass. Infrastructure failures are distinguished from model/task failures and never cause Not Qualified on their own. Excluded runs stay inspectable but do not count. Demo runs are labeled and excluded from real qualification.</p>
+
+{% if triples %}
+<div class="table-wrap">
+<table>
+  <caption class="visually-hidden">Computed qualification per harness, model, capability, and test version</caption>
+  <thead>
+    <tr>
+      <th scope="col">Harness</th>
+      <th scope="col">Model (exact identifier)</th>
+      <th scope="col">Capability</th>
+      <th scope="col">Test context</th>
+      <th scope="col">Computed state</th>
+      <th scope="col">Evaluated evidence</th>
+      <th scope="col">Evidence</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for t in triples %}
+    <tr data-testid="computed-triple-{{ t.harness.id }}-{{ t.model.id }}-{{ t.capability.id }}-{{ t.test_version.id if t.test_version else "none" }}">
+      <td class="mono">{{ t.harness.harness_key if t.harness else "—" }}{% if t.harness and t.harness.version %} {{ t.harness.version }}{% endif %}</td>
+      <td class="mono break">{{ t.model.exact_identifier if t.model else "—" }} <span class="muted">({{ t.model.provider if t.model else "—" }})</span></td>
+      <td class="mono">{{ t.capability.capability_key if t.capability else "—" }} {{ t.capability.version if t.capability else "" }}</td>
+      <td class="mono">{{ t.logical_test.key if t.logical_test else "—" }} v{{ t.test_version.version_number if t.test_version else "—" }}</td>
+      <td><span class="badge {{ badge_class("computed", t.assessment.state.value) }}">{{ t.assessment.label }}</span></td>
+      <td>{{ t.assessment.counts.evaluated }} evaluated · {{ t.assessment.counts.pass }} pass · {{ t.assessment.counts.fail }} fail · {{ t.assessment.counts.needs_review }} review · {{ t.assessment.counts.infrastructure }} infra · {{ t.assessment.counts.unknown }} unknown · {{ t.assessment.counts.excluded }} excluded</td>
+      <td><a href="#triple-{{ t.harness.id }}-{{ t.model.id }}-{{ t.capability.id }}-{{ t.test_version.id if t.test_version else "none" }}">Why this state</a></td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+
+{% for t in triples %}
+<section aria-labelledby="triple-{{ t.harness.id }}-{{ t.model.id }}-{{ t.capability.id }}-{{ t.test_version.id if t.test_version else "none" }}" class="triple-block">
+  <h2 id="triple-{{ t.harness.id }}-{{ t.model.id }}-{{ t.capability.id }}-{{ t.test_version.id if t.test_version else "none" }}" class="mono">{{ t.harness.harness_key if t.harness else "?" }} + {{ t.model.model_key if t.model else "?" }} + {{ t.capability.capability_key if t.capability else "?" }} {{ t.capability.version if t.capability else "" }} + {{ t.logical_test.key if t.logical_test else "?" }} v{{ t.test_version.version_number if t.test_version else "?" }}</h2>
+  <p>Computed state: <span class="badge {{ badge_class("computed", t.assessment.state.value) }}">{{ t.assessment.label }}</span></p>
+  <h3>Why this state was assigned</h3>
+  <ul class="history" data-testid="computed-reasons-{{ t.harness.id }}-{{ t.model.id }}-{{ t.capability.id }}-{{ t.test_version.id if t.test_version else "none" }}">
+    {% for reason in t.assessment.reasons %}
+    <li>{{ reason }}</li>
+    {% endfor %}
+  </ul>
+  <h3>Run evidence ({{ t.run_rows|length }})</h3>
+  <div class="table-wrap">
+  <table>
+    <caption class="visually-hidden">Per-run evidence classification for this triple</caption>
+    <thead>
+      <tr>
+        <th scope="col">Run</th>
+        <th scope="col">Verdict / score</th>
+        <th scope="col">Evidence class</th>
+        <th scope="col">Failure primary</th>
+        <th scope="col">Flags</th>
+        <th scope="col">Detail</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for rr in t.run_rows %}
+      <tr data-run-id="{{ rr.run.id }}">
+        <td>#{{ rr.run.id }}{% if rr.run.is_demo %} <span class="badge badge-unknown">demo</span>{% endif %}</td>
+        <td>
+          {% if rr.latest_score %}
+          <span class="badge {{ badge_class("verdict", rr.latest_score.verdict.value) }}">{{ rr.latest_score.verdict.value }}</span>
+          {% if rr.latest_score.total_score is not none %}<span class="score"> {{ "%.2f"|format(rr.latest_score.total_score) }}</span>{% endif %}
+          {% else %}
+          <span class="badge badge-unknown">UNKNOWN</span> <span class="muted">Not scored</span>
+          {% endif %}
+        </td>
+        <td><span class="mono">{{ rr.evidence.verdict or "UNKNOWN" }}</span> <span class="muted">→</span> <span class="badge {{ badge_class("evidence", rr.classification.category) }}">{{ rr.classification.category }}</span></td>
+        <td class="mono">{{ rr.evidence.failure_primary or "—" }}</td>
+        <td>
+          {% if rr.evidence.has_permission_denial %}<span class="badge badge-review">permission-denied</span>{% endif %}
+          {% if rr.evidence.has_intervention %}<span class="badge badge-review">intervention</span>{% endif %}
+          {% if rr.evidence.has_exclusion %}<span class="badge badge-excluded">excluded</span>{% endif %}
+          {% if not rr.evidence.has_permission_denial and not rr.evidence.has_intervention and not rr.evidence.has_exclusion %}<span class="muted">—</span>{% endif %}
+        </td>
+        <td><a href="/operator/runs/{{ rr.run.id }}">Inspect run #{{ rr.run.id }}</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  <h3>Per-run classification detail</h3>
+  <ul class="history">
+    {% for c in t.assessment.classified %}
+    <li data-testid="computed-class-{{ c.run_id }}">{{ c.detail }} · <a href="/operator/runs/{{ c.run_id }}">run #{{ c.run_id }}</a></li>
+    {% endfor %}
+  </ul>
+</section>
+{% endfor %}
+{% else %}
+<p>No completed evaluation evidence to qualify yet.</p>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+{% block title %}Compare · AECC Operator{% endblock %}
+{% block content %}
+<h1>Model + Harness Comparison</h1>
+<p class="lede">Side-by-side completed evaluation evidence across model + harness combinations for the same capability/test context. Only completed evidence is shown; queued or running work never counts. UNKNOWN is never a pass; infrastructure failures are distinguished from model/task failures.</p>
+
+<section aria-labelledby="compare-filter-heading">
+  <h2 id="compare-filter-heading">Comparison context</h2>
+  <form method="get" action="/operator/compare" class="form">
+    <div class="form-group">
+      <label for="capability_id">Capability (test context)</label>
+      <select id="capability_id" name="capability_id" class="input">
+        <option value="">All capabilities</option>
+        {% for c in contexts.capabilities %}
+        <option value="{{ c.id }}" {% if selected_capability_id == c.id %}selected{% endif %}>{{ c.capability_key }} {{ c.version }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="form-group">
+      <label for="test_version_id">Test version (exact context)</label>
+      <select id="test_version_id" name="test_version_id" class="input">
+        <option value="">All test versions</option>
+        {% for v in contexts.versions %}
+        <option value="{{ v.id }}" {% if selected_test_version_id == v.id %}selected{% endif %}>#{{ v.id }} · {{ contexts.logical_map.get(v.logical_test_id).key if contexts.logical_map.get(v.logical_test_id) else "test" }} v{{ v.version_number }} ({{ v.capability_key }})</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="form-actions">
+      <button type="submit" class="btn primary">Compare</button>
+      <a href="/operator/compare" class="btn">Clear</a>
+    </div>
+  </form>
+</section>
+
+{% if assessments %}
+<section aria-labelledby="compare-qual-heading">
+  <h2 id="compare-qual-heading">Computed qualification in this context</h2>
+  <p class="note">Deterministic assessment per exact harness + model + capability + test version from the evidence below. No LLM is involved. Full reasoning is on the <a href="/operator/qualification">Qualification</a> page.</p>
+  <div class="table-wrap">
+  <table>
+    <caption class="visually-hidden">Computed qualification per exact test context in the selected context</caption>
+    <thead>
+      <tr>
+        <th scope="col">Harness + model + capability + test</th>
+        <th scope="col">Computed state</th>
+        <th scope="col">Evaluated (pass / findings / fail / review)</th>
+        <th scope="col">Set aside (infra / unknown / excluded)</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for a in assessments %}
+      <tr data-testid="compare-assessment-{{ a.harness.harness_key if a.harness else "?" }}-{{ a.model.model_key if a.model else "?" }}-{{ a.test_version.id if a.test_version else "none" }}">
+        <td class="mono break">{{ a.harness.harness_key if a.harness else "—" }} + {{ a.model.model_key if a.model else "—" }} + {{ a.capability.capability_key if a.capability else "—" }} {{ a.capability.version if a.capability else "" }} + {{ a.logical_test.key if a.logical_test else "—" }} v{{ a.test_version.version_number if a.test_version else "—" }}</td>
+        <td><span class="badge {{ badge_class("computed", a.assessment.state.value) }}">{{ a.assessment.label }}</span></td>
+        <td>{{ a.assessment.counts.evaluated }} ({{ a.assessment.counts.pass }} / {{ a.assessment.counts.pass_with_findings }} / {{ a.assessment.counts.fail }} / {{ a.assessment.counts.needs_review }})</td>
+        <td>{{ a.assessment.counts.infrastructure }} / {{ a.assessment.counts.unknown }} / {{ a.assessment.counts.excluded }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</section>
+{% endif %}
+
+<section aria-labelledby="compare-rows-heading">
+  <h2 id="compare-rows-heading">Completed runs ({{ rows|length }})</h2>
+  {% if rows %}
+  <div class="table-wrap">
+  <table>
+    <caption class="visually-hidden">Completed runs side by side, newest first</caption>
+    <thead>
+      <tr>
+        <th scope="col">Run</th>
+        <th scope="col">Test</th>
+        <th scope="col">Model (exact identifier)</th>
+        <th scope="col">Harness</th>
+        <th scope="col">Capability</th>
+        <th scope="col">Verdict / score</th>
+        <th scope="col">Elapsed</th>
+        <th scope="col">Tokens in/out</th>
+        <th scope="col">Cost</th>
+        <th scope="col">Attempts</th>
+        <th scope="col">Flags</th>
+        <th scope="col">Failure reason</th>
+        <th scope="col">Evidence class</th>
+        <th scope="col">Detail</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in rows %}
+      <tr data-run-id="{{ row.run.id }}">
+        <td>#{{ row.run.id }}{% if row.run.is_demo %} <span class="badge badge-unknown">demo</span>{% endif %}</td>
+        <td>{{ row.logical_test.name if row.logical_test else row.test_version.capability_key if row.test_version else "—" }}</td>
+        <td class="mono break">{{ row.model.exact_identifier if row.model else "—" }}</td>
+        <td class="mono">{{ row.harness.harness_key if row.harness else "—" }}{% if row.harness and row.harness.version %} {{ row.harness.version }}{% endif %}</td>
+        <td class="mono">{{ row.capability.capability_key if row.capability else "—" }} {{ row.capability.version if row.capability else "" }}</td>
+        <td>
+          {% if row.latest_score %}
+          <span class="badge {{ badge_class("verdict", row.latest_score.verdict.value) }}">{{ row.latest_score.verdict.value }}</span>
+          {% if row.latest_score.total_score is not none %}<span class="score"> {{ "%.2f"|format(row.latest_score.total_score) }}</span>{% endif %}
+          {% else %}
+          <span class="badge badge-unknown">UNKNOWN</span> <span class="muted">Not scored</span>
+          {% endif %}
+        </td>
+        <td>{{ format_elapsed(row.latest_attempt.elapsed_seconds if row.latest_attempt else none) }}</td>
+        <td>
+          {% if row.latest_attempt %}
+          {{ format_tokens(row.latest_attempt.tokens_input) }} / {{ format_tokens(row.latest_attempt.tokens_output) }}
+          {% else %}
+          Not recorded / Not recorded
+          {% endif %}
+        </td>
+        <td title="{{ format_cost_title(row.latest_attempt.cost if row.latest_attempt else none, row.latest_attempt.cost_source if row.latest_attempt else none) }}">{{ format_cost(row.latest_attempt.cost if row.latest_attempt else none) }}</td>
+        <td>{{ row.attempts|length }}</td>
+        <td>
+          {% if row.has_permission_denial %}<span class="badge badge-review">permission-denied</span>{% endif %}
+          {% if row.has_intervention %}<span class="badge badge-review">intervention</span>{% endif %}
+          {% if row.exclusions %}<span class="badge badge-excluded">excluded</span>{% endif %}
+          {% if not row.has_permission_denial and not row.has_intervention and not row.exclusions %}<span class="muted">—</span>{% endif %}
+        </td>
+        <td class="mono">{{ row.latest_attempt.failure_primary.value if row.latest_attempt and row.latest_attempt.failure_primary else "—" }}</td>
+        <td><span class="badge {{ badge_class("evidence", row.evidence_category) }}">{{ row.evidence_category }}</span></td>
+        <td><a href="/operator/runs/{{ row.run.id }}">Inspect run #{{ row.run.id }}</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  <p class="note">Evidence class is the deterministic per-run classification used by computed qualification: pass, pass_with_findings, needs_review, fail, unknown, infrastructure, or excluded. Drill into any run for full attempt, score, and event history.</p>
+  {% else %}
+  <p>No completed evaluation evidence in this context yet.</p>
+  {% endif %}
+</section>
+{% endblock %}

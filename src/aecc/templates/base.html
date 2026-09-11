@@ -14,6 +14,8 @@
       <nav aria-label="Operator navigation">
         <ul class="nav-list">
           <li><a href="/operator" {% if active == "overview" %}aria-current="page" class="active"{% endif %}>Overview</a></li>
+          <li><a href="/operator/compare" {% if active == "compare" %}aria-current="page" class="active"{% endif %}>Compare</a></li>
+          <li><a href="/operator/qualification" {% if active == "qualification" %}aria-current="page" class="active"{% endif %}>Qualification</a></li>
           <li><a href="/operator/tests" {% if active == "tests" %}aria-current="page" class="active"{% endif %}>Tests</a></li>
           <li><a href="/operator/capabilities" {% if active == "capabilities" %}aria-current="page" class="active"{% endif %}>Capabilities</a></li>
           <li><a href="/operator/models" {% if active == "models" %}aria-current="page" class="active"{% endif %}>Models</a></li>
