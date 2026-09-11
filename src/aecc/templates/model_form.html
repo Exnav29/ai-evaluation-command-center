@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}{% if mode == "new" %}Add model{% else %}Edit model{% endif %} · AECC{% endblock %}
+{% block content %}
+<h1>{% if mode == "new" %}Add model{% else %}Edit model #{{ model.id }}{% endif %}</h1>
+<p class="lede">Exact provider/model identifier is the evidence identity (e.g. <span class="mono">openrouter/mimo-v2-flash:free</span>). Pricing is free / paid / unknown with optional input/output pricing.</p>
+<form method="post" action="{% if mode == 'new' %}/operator/models{% else %}/operator/models/{{ model.id }}/edit{% endif %}" class="form">
+  <div class="form-group">
+    <label for="model_key">Model key (stable, unique)</label>
+    <input type="text" id="model_key" name="model_key" required value="{{ form.model_key or '' }}" class="input" placeholder="mimo-v2-flash-free" />
+    {% if errors.model_key %}<p class="error">{{ errors.model_key }}</p>{% endif %}
+  </div>
+  <div class="form-group">
+    <label for="provider">Provider</label>
+    <input type="text" id="provider" name="provider" required value="{{ form.provider or '' }}" class="input" placeholder="openrouter" />
+    {% if errors.provider %}<p class="error">{{ errors.provider }}</p>{% endif %}
+  </div>
+  <div class="form-group">
+    <label for="exact_identifier">Exact model identifier</label>
+    <input type="text" id="exact_identifier" name="exact_identifier" required value="{{ form.exact_identifier or '' }}" class="input" placeholder="openrouter/mimo-v2-flash:free" />
+    {% if errors.exact_identifier %}<p class="error">{{ errors.exact_identifier }}</p>{% endif %}
+  </div>
+  <div class="form-group">
+    <label for="display_name">Display name</label>
+    <input type="text" id="display_name" name="display_name" value="{{ form.display_name or '' }}" class="input" placeholder="MiMo V2 Flash (free)" />
+  </div>
+  <div class="form-group">
+    <label for="pricing_tier">Pricing tier</label>
+    <select id="pricing_tier" name="pricing_tier" class="input">
+      <option value="free" {% if form.pricing_tier == "free" %}selected{% endif %}>free</option>
+      <option value="paid" {% if form.pricing_tier == "paid" %}selected{% endif %}>paid</option>
+      <option value="unknown" {% if form.pricing_tier == "unknown" or not form.pricing_tier %}selected{% endif %}>unknown</option>
+    </select>
+    {% if errors.pricing_tier %}<p class="error">{{ errors.pricing_tier }}</p>{% endif %}
+  </div>
+  <div class="form-group">
+    <label for="price_input">Input price (per 1M tokens, optional)</label>
+    <input type="text" id="price_input" name="price_input" value="{{ form.price_input or '' }}" class="input" placeholder="0.10" />
+    {% if errors.price_input %}<p class="error">{{ errors.price_input }}</p>{% endif %}
+  </div>
+  <div class="form-group">
+    <label for="price_output">Output price (per 1M tokens, optional)</label>
+    <input type="text" id="price_output" name="price_output" value="{{ form.price_output or '' }}" class="input" placeholder="0.30" />
+    {% if errors.price_output %}<p class="error">{{ errors.price_output }}</p>{% endif %}
+  </div>
+  <div class="form-group">
+    <label for="harness_config">Supported harness / config metadata (JSON or freeform)</label>
+    <textarea id="harness_config" name="harness_config" rows="3" class="input" placeholder='{"harnesses":["opencode"],"config":"low"}'>{{ form.harness_config or '' }}</textarea>
+  </div>
+  <div class="form-group">
+    <label for="description">Description</label>
+    <textarea id="description" name="description" rows="3" class="input">{{ form.description or '' }}</textarea>
+  </div>
+  <div class="form-group checkbox">
+    <label><input type="checkbox" name="is_active" {% if form.is_active %}checked{% endif %} /> Active</label>
+    <span class="muted">Inactive models remain in history but are hidden from default selection.</span>
+  </div>
+  <div class="form-actions">
+    <button type="submit" class="btn primary">{% if mode == "new" %}Create model{% else %}Save changes{% endif %}</button>
+    <a href="{% if mode == 'new' %}/operator/models{% else %}/operator/models/{{ model.id }}{% endif %}" class="btn">Cancel</a>
+  </div>
+</form>
+{% endblock %}

@@ -103,8 +103,8 @@ def seed_dashboard_data(session: Session) -> dict:
     """Insert deterministic demo evidence. Returns ids for tests/demo."""
     h1 = Harness(harness_key="opencode", display_name="opencode", version="1.4.2", build="build-2026.09.01", config_snapshot='{"mode":"contained"}', config_hash="cfg-opencode-142")
     h2 = Harness(harness_key="opencode-strict", display_name="opencode-strict", version="2.0.0", build="build-2026.09.02", config_snapshot='{"mode":"restricted"}', config_hash="cfg-strict-200")
-    m1 = Model(model_key="cheap-free", provider="test-provider", exact_identifier="test-provider/opencode-cheap-1.0-extended-identifier-for-readability", pricing_class="free", config_params='{"effort":"low"}')
-    m2 = Model(model_key="frontier-x", provider="other-provider", exact_identifier="other-provider/frontier-x-2026.01-preview-long-exact-identifier", pricing_class="paid", config_params='{"effort":"high"}')
+    m1 = Model(model_key="cheap-free", provider="test-provider", exact_identifier="test-provider/opencode-cheap-1.0-extended-identifier-for-readability", pricing_class="free", pricing_tier="free", price_input=0.0, price_output=0.0, is_active=True, config_params='{"effort":"low"}')
+    m2 = Model(model_key="frontier-x", provider="other-provider", exact_identifier="other-provider/frontier-x-2026.01-preview-long-exact-identifier", pricing_class="paid", pricing_tier="paid", price_input=0.15, price_output=0.60, is_active=True, config_params='{"effort":"high"}')
     cap_bug = Capability(capability_key="bug-fixing", version="v1", definition="fix defects", description="Bug fixing capability")
     cap_ref = Capability(capability_key="refactoring", version="v2", definition="restructure code", description="Refactoring capability")
     lt1 = LogicalTest(key="dashboard-login-fix", name="Login fix", description="fix login bug")
