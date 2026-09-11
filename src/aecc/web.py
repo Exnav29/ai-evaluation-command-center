@@ -52,7 +52,7 @@ from sqlalchemy.orm import Session
 
 from aecc import dashboard_queries as queries
 from aecc import dashboard_viewmodels as vm
-from aecc.models import Capability, LogicalTest, Model, TestVersion
+from aecc.models import Capability, Harness, LogicalTest, Model, Run, TestVersion
 
 CAPABILITY_KEY_RE = re.compile(r"^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)*$")
 LOGICAL_KEY_RE = re.compile(r"^[a-z][a-z0-9_\-\.]*$")
@@ -265,11 +265,154 @@ def create_app(engine=None) -> FastAPI:
     def operator_overview(request: Request, session: Session = Depends(get_session)):
         rows = queries.fetch_runs_overview(session, limit=100)
         summary = queries.fetch_summary(session)
+        # demo banner
+        from aecc.demo import has_demo_data
+        has_demo = has_demo_data(session)
+        demo_counts = None
+        if has_demo:
+            from sqlalchemy import func as _func
+            demo_counts = int(session.scalar(select(_func.count(Run.id)).where(Run.is_demo == True)) or 0)  # noqa: E712
         return templates.TemplateResponse(
             request,
             "overview.html",
-            {"rows": rows, "summary": summary, "active": "overview"},
+            {"rows": rows, "summary": summary, "active": "overview", "has_demo": has_demo, "demo_counts": demo_counts},
         )
+
+    @app.get("/operator/runs/new", response_class=HTMLResponse)
+    def run_new_form(request: Request, session: Session = Depends(get_session)):
+        import uuid
+
+        versions = list(session.scalars(select(TestVersion).order_by(TestVersion.logical_test_id, TestVersion.version_number)).all())
+        logical_map = {}
+        if versions:
+            lts = session.scalars(select(LogicalTest).where(LogicalTest.id.in_({v.logical_test_id for v in versions}))).all()
+            logical_map = {lt.id: lt for lt in lts}
+        models = list(session.scalars(select(Model).where(Model.is_active == True).order_by(Model.provider, Model.model_key)).all())  # noqa: E712
+        harnesses = list(session.scalars(select(Harness).order_by(Harness.harness_key)).all())
+        # idempotency token
+        token = str(uuid.uuid4())
+        return templates.TemplateResponse(
+            request,
+            "run_form.html",
+            {"versions": versions, "logical_map": logical_map, "models": models, "harnesses": harnesses, "token": token, "errors": {}, "active": "overview"},
+        )
+
+    @app.post("/operator/runs", response_class=HTMLResponse)
+    async def run_create(request: Request, session: Session = Depends(get_session)):
+        import uuid
+
+        body = await request.body()
+        form = _parse_form_body(body)
+        test_version_id_raw = (form.get("test_version_id") or "").strip()
+        model_id_raw = (form.get("model_id") or "").strip()
+        harness_id_raw = (form.get("harness_id") or "").strip()
+        idempotency_key = (form.get("idempotency_key") or "").strip() or str(uuid.uuid4())
+        errors: dict[str, str] = {}
+        # Validate
+        try:
+            tv_id = int(test_version_id_raw)
+            tv = session.get(TestVersion, tv_id)
+            if tv is None:
+                errors["test_version_id"] = "Selected test version not found."
+        except ValueError:
+            errors["test_version_id"] = "Invalid test version."
+            tv = None
+        try:
+            m_id = int(model_id_raw)
+            m = session.get(Model, m_id)
+            if m is None or not m.is_active:
+                errors["model_id"] = "Selected model not found or inactive."
+        except ValueError:
+            errors["model_id"] = "Invalid model."
+            m = None
+        harness_id = None
+        if harness_id_raw:
+            try:
+                harness_id = int(harness_id_raw)
+                if session.get(Harness, harness_id) is None:
+                    errors["harness_id"] = "Harness not found."
+            except ValueError:
+                errors["harness_id"] = "Invalid harness."
+        # Idempotency is decided by the service layer: same key + same parameters
+        # returns the existing run; same key + different parameters is refused.
+        if errors:
+            versions = list(session.scalars(select(TestVersion).order_by(TestVersion.logical_test_id, TestVersion.version_number)).all())
+            logical_map = {}
+            if versions:
+                lts = session.scalars(select(LogicalTest).where(LogicalTest.id.in_({v.logical_test_id for v in versions}))).all()
+                logical_map = {lt.id: lt for lt in lts}
+            models = list(session.scalars(select(Model).where(Model.is_active == True).order_by(Model.provider, Model.model_key)).all())  # noqa: E712
+            harnesses = list(session.scalars(select(Harness).order_by(Harness.harness_key)).all())
+            return templates.TemplateResponse(
+                request,
+                "run_form.html",
+                {"versions": versions, "logical_map": logical_map, "models": models, "harnesses": harnesses, "token": idempotency_key, "errors": errors, "form": form, "active": "overview"},
+                status_code=400,
+            )
+        # Delegate to the service layer off the event loop with its own
+        # database session: harness execution can take up to the test
+        # version's timeout and must not block the async request worker or
+        # share the request-scoped session across threads.
+        from aecc.execution import execute_run
+        from starlette.concurrency import run_in_threadpool
+
+        def _run_execution():
+            work_session = session_factory()
+            try:
+                return execute_run(
+                    work_session,
+                    test_version_id=tv.id,  # type: ignore
+                    model_id=m.id,  # type: ignore
+                    harness_id=harness_id,
+                    idempotency_key=idempotency_key,
+                    requested_by="operator",
+                    is_demo=False,
+                )
+            finally:
+                work_session.close()
+
+        try:
+            run, attempt, result = await run_in_threadpool(_run_execution)
+        except ValueError as e:
+            errors["test_version_id"] = str(e)
+            versions = list(session.scalars(select(TestVersion).order_by(TestVersion.logical_test_id, TestVersion.version_number)).all())
+            logical_map = {}
+            if versions:
+                lts = session.scalars(select(LogicalTest).where(LogicalTest.id.in_({v.logical_test_id for v in versions}))).all()
+                logical_map = {lt.id: lt for lt in lts}
+            models = list(session.scalars(select(Model).where(Model.is_active == True).order_by(Model.provider, Model.model_key)).all())  # noqa: E712
+            harnesses = list(session.scalars(select(Harness).order_by(Harness.harness_key)).all())
+            return templates.TemplateResponse(
+                request,
+                "run_form.html",
+                {"versions": versions, "logical_map": logical_map, "models": models, "harnesses": harnesses, "token": idempotency_key, "errors": errors, "form": form, "active": "overview"},
+                status_code=400,
+            )
+        return RedirectResponse(url=f"/operator/runs/{run.id}", status_code=303)
+
+    @app.post("/operator/demo/clear", response_class=HTMLResponse)
+    async def demo_clear(request: Request, session: Session = Depends(get_session)):
+        from aecc.demo import clear_demo_data, has_demo_data
+
+        from aecc.demo import DemoDataReferencedError
+
+        if not has_demo_data(session):
+            return RedirectResponse(url="/operator", status_code=303)
+        try:
+            clear_demo_data(session)
+        except DemoDataReferencedError as e:
+            raise HTTPException(status_code=409, detail=str(e))
+        return RedirectResponse(url="/operator", status_code=303)
+
+    @app.post("/operator/demo/seed", response_class=HTMLResponse)
+    async def demo_seed(request: Request, session: Session = Depends(get_session)):
+        from aecc.demo import has_demo_data, seed_demo_data
+
+        # Only seed if no demo yet and requested explicitly; prevents accidental reseed
+        if has_demo_data(session):
+            return RedirectResponse(url="/operator", status_code=303)
+        seed_demo_data(session)
+        return RedirectResponse(url="/operator", status_code=303)
 
     @app.get("/operator/runs/{run_id}", response_class=HTMLResponse)
     def run_detail(run_id: int, request: Request, session: Session = Depends(get_session)):

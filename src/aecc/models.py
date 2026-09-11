@@ -141,6 +141,7 @@ class LogicalTest(Base):
     name: Mapped[str] = mapped_column(String(500), nullable=False)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=_utcnow)
+    is_demo: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default=sa_text("0"))
 
     versions: Mapped[list["TestVersion"]] = relationship(back_populates="logical_test")
 
@@ -157,6 +158,7 @@ class Harness(Base):
     build: Mapped[str | None] = mapped_column(String(255), nullable=True)
     config_snapshot: Mapped[str | None] = mapped_column(Text, nullable=True)
     config_hash: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    is_demo: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default=sa_text("0"))
 
 
 class Model(Base):
@@ -178,6 +180,7 @@ class Model(Base):
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     updated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     config_params: Mapped[str | None] = mapped_column(Text, nullable=True)  # JSON snapshot
+    is_demo: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default=sa_text("0"))
 
 
 class Capability(Base):
@@ -198,6 +201,7 @@ class Capability(Base):
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True, server_default=sa_text("1"))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=_utcnow)
     updated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    is_demo: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default=sa_text("0"))
 
     parent: Mapped["Capability | None"] = relationship(
         "Capability", remote_side="Capability.id", backref="children", foreign_keys="[Capability.parent_id]"
@@ -243,6 +247,7 @@ class TestVersion(Base):
     supersedes_version_id: Mapped[int | None] = mapped_column(
         ForeignKey("test_versions.id", ondelete="RESTRICT"), nullable=True
     )
+    is_demo: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default=sa_text("0"))
 
     logical_test: Mapped[LogicalTest] = relationship(back_populates="versions")
 
@@ -287,6 +292,10 @@ class Run(Base):
     requested_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=_utcnow)
     started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    is_demo: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default=sa_text("0"))
+    # Unique index created by migration 0004 (ix_runs_idempotency_key); the ORM
+    # declaration must agree so create_all-based schemas match the migration.
+    idempotency_key: Mapped[str | None] = mapped_column(String(64), nullable=True, unique=True)
 
     attempts: Mapped[list["Attempt"]] = relationship(back_populates="run", cascade="save-update")
 
@@ -357,6 +366,7 @@ class Attempt(Base):
     invocation_meta: Mapped[str | None] = mapped_column(Text, nullable=True)  # command/metadata snapshot
 
     sealed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    is_demo: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default=sa_text("0"))
 
     run: Mapped[Run] = relationship(back_populates="attempts")
 
@@ -393,6 +403,7 @@ class ScoreRevision(Base):
     supersedes_revision_id: Mapped[int | None] = mapped_column(
         ForeignKey("score_revisions.id", ondelete="RESTRICT"), nullable=True
     )
+    is_demo: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default=sa_text("0"))
 
 
 # ---------------------------------------------------------------------------
@@ -413,6 +424,7 @@ class InterventionEvent(Base):
     actor: Mapped[str | None] = mapped_column(String(255), nullable=True)
     reason: Mapped[str] = mapped_column(Text, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=_utcnow)
+    is_demo: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default=sa_text("0"))
 
 
 class ExclusionEvent(Base):
@@ -431,6 +443,7 @@ class ExclusionEvent(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=_utcnow)
     methodology_version: Mapped[str | None] = mapped_column(String(64), nullable=True)
     scope: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    is_demo: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default=sa_text("0"))
 
 
 # ---------------------------------------------------------------------------
@@ -470,6 +483,7 @@ class QualificationDecision(Base):
     supersedes_decision_id: Mapped[int | None] = mapped_column(
         ForeignKey("qualification_decisions.id", ondelete="RESTRICT"), nullable=True
     )
+    is_demo: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default=sa_text("0"))
 
     evidence_links: Mapped[list["QualificationEvidence"]] = relationship(
         back_populates="qualification", cascade="save-update"
@@ -500,6 +514,7 @@ class QualificationEvidence(Base):
     )
 
     qualification: Mapped[QualificationDecision] = relationship(back_populates="evidence_links")
+    is_demo: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default=sa_text("0"))
 
 
 # ---------------------------------------------------------------------------
@@ -525,3 +540,4 @@ class AuditEvent(Base):
         ForeignKey("qualification_decisions.id", ondelete="RESTRICT"), nullable=True
     )
     details: Mapped[str | None] = mapped_column(Text, nullable=True)
+    is_demo: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default=sa_text("0"))

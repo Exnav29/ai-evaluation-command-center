@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}Run Evaluation · AECC Operator{% endblock %}
+{% block content %}
+<h1>Run Evaluation</h1>
+<p class="lede">Select an exact registered TestVersion and Model. The system will create a Run and Attempt, execute through the configured harness, and persist evidence. Process, deliverable, and task outcomes are kept separate — exit code 0 is never treated as task success and UNKNOWN stays UNKNOWN.</p>
+
+{% if errors %}
+<div class="history" role="alert" style="border-color: var(--fail);">
+  <strong>Fix the following:</strong>
+  <ul>
+  {% for k,v in errors.items() %}
+    <li>{{ k }}: {{ v }}</li>
+  {% endfor %}
+  </ul>
+</div>
+{% endif %}
+
+{% if not versions %}
+<p>No registered test versions available. <a href="/operator/tests/new">Register a test version</a> first.</p>
+{% elif not models %}
+<p>No active models available. <a href="/operator/models/new">Register a model</a> first.</p>
+{% else %}
+<form method="post" action="/operator/runs" class="form" id="run-evaluation-form">
+  <div class="form-group">
+    <label for="test_version_id">Test version (exact)</label>
+    <select name="test_version_id" id="test_version_id" class="input" required>
+      <option value="">— select —</option>
+      {% for v in versions %}
+        {% set lt = logical_map.get(v.logical_test_id) %}
+        <option value="{{ v.id }}" {% if form and form.get('test_version_id')== v.id|string %}selected{% endif %}>
+          {{ lt.key if lt else 'test' }} · v{{ v.version_number }} · {{ v.capability_key }}{% if v.capability_version %} {{ v.capability_version }}{% endif %} · {{ lt.name if lt else '' }} · hash {{ v.definition_hash[:8] }}…
+        </option>
+      {% endfor %}
+    </select>
+    {% if errors.test_version_id %}<p class="error">{{ errors.test_version_id }}</p>{% endif %}
+  </div>
+
+  <div class="form-group">
+    <label for="model_id">Model (exact identifier)</label>
+    <select name="model_id" id="model_id" class="input" required>
+      <option value="">— select —</option>
+      {% for m in models %}
+        <option value="{{ m.id }}" {% if form and form.get('model_id')== m.id|string %}selected{% endif %}>
+          {{ m.provider }} / {{ m.exact_identifier }} ({{ m.model_key }})
+        </option>
+      {% endfor %}
+    </select>
+    {% if errors.model_id %}<p class="error">{{ errors.model_id }}</p>{% endif %}
+  </div>
+
+  <div class="form-group">
+    <label for="harness_id">Harness (optional — auto-selects the first runnable non-demo harness)</label>
+    <select name="harness_id" id="harness_id" class="input">
+      <option value="">— auto (first runnable non-demo harness) —</option>
+      {% for h in harnesses %}
+        <option value="{{ h.id }}" {% if form and form.get('harness_id')== h.id|string %}selected{% endif %}>
+          {{ h.harness_key }}{% if h.version %} {{ h.version }}{% endif %}{% if h.is_demo %} · demo{% endif %}
+        </option>
+      {% endfor %}
+    </select>
+    {% if errors.harness_id %}<p class="error">{{ errors.harness_id }}</p>{% endif %}
+  </div>
+
+  <input type="hidden" name="idempotency_key" value="{{ token }}" />
+
+  <div class="form-actions">
+    <button type="submit" class="btn primary" id="run-submit-btn">Start evaluation</button>
+    <a href="/operator" class="btn">Cancel</a>
+  </div>
+  <p class="note">Duplicate accidental submits are prevented via idempotency key. UNKNOWN outcomes remain UNKNOWN; no scoring or qualification automation is performed.</p>
+  <p class="note">Containment: the host adapter runs the harness in a fresh per-run workspace outside this repository with workspace-only file access and only executes <span class="mono">READ_ONLY_NO_SHELL</span> test versions. Versions whose permission profile grants write or shell authority are recorded as INFRASTRUCTURE_FAILURE (not-configured) until container containment is available.</p>
+</form>
+
+<script>
+  // Prevent duplicate accidental submits: disable button after first submit
+  (function(){
+    var form = document.getElementById('run-evaluation-form');
+    var btn = document.getElementById('run-submit-btn');
+    if(form && btn){
+      form.addEventListener('submit', function(){
+        btn.disabled = true;
+        btn.textContent = 'Starting…';
+      });
+    }
+  })();
+</script>
+{% endif %}
+{% endblock %}
