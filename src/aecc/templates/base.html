@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>{% block title %}AECC Operator Dashboard{% endblock %}</title>
   <link rel="stylesheet" href="/static/css/dashboard.css" />
+  {% block head_extra %}{% endblock %}
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to main content</a>
@@ -30,5 +31,8 @@
   <footer class="footer">
     <p>Operator evidence views query persisted evaluation data. UNKNOWN means unknown — never pass. Exit code 0 is not proof of task success.</p>
   </footer>
+  <script src="/static/vendor/echarts.min.js" defer></script>
+  <script src="/static/js/charts.js" defer></script>
+  {% block body_scripts %}{% endblock %}
 </body>
 </html>

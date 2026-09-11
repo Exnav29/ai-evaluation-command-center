@@ -62,6 +62,9 @@
 </section>
 {% endif %}
 
+{% set chart_prefix = "compare" %}
+{% include "charts_section.html" %}
+
 <section aria-labelledby="compare-rows-heading">
   <h2 id="compare-rows-heading">Completed runs ({{ rows|length }})</h2>
   {% if rows %}
