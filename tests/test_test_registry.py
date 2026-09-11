@@ -543,6 +543,6 @@ def test_migration_leaves_historical_capability_version_null(tmp_path):
             cnt = conn.execute(text("SELECT COUNT(*) FROM capabilities WHERE capability_key='legacy.test'")).scalar()
             assert cnt == 2
             # new registration after migration must require exact version (tested elsewhere) – smoke check that column is nullable but new rows need version
-            assert conn.execute(text("SELECT version_num FROM alembic_version")).scalar() == "0003_test_registry_capability_version"
+            assert conn.execute(text("SELECT version_num FROM alembic_version")).scalar() in ("0003_test_registry_capability_version", "0004_execution_and_demo", "0005_provenance_relabel_guard")
     finally:
         engine2.dispose()

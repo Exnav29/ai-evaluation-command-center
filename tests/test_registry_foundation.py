@@ -102,9 +102,9 @@ def test_alembic_migrates_to_head_includes_registry_columns(tmp_path):
             # triggers for pricing_tier
             triggers = {r[0] for r in conn.execute(text("SELECT name FROM sqlite_master WHERE type='trigger'")).fetchall()}
             assert "trg_models_pricing_tier_check" in triggers
-            # alembic version is head (0003 after test-registry slice)
+            # alembic version is head (0004 after execution slice)
             ver = conn.execute(text("SELECT version_num FROM alembic_version")).scalar()
-            assert ver in ("0002_registry_foundation", "0003_test_registry_capability_version")
+            assert ver in ("0002_registry_foundation", "0003_test_registry_capability_version", "0004_execution_and_demo", "0005_provenance_relabel_guard")
             # original table still present
             tables = {r[0] for r in conn.execute(text("SELECT name FROM sqlite_master WHERE type='table'")).fetchall()}
             assert "capabilities" in tables and "models" in tables and "runs" in tables

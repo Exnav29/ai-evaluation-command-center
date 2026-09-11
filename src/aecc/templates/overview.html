@@ -4,6 +4,27 @@
 <h1>Operator Overview</h1>
 <p class="lede">Recent evaluation runs with latest verdict, cost, and qualification state. All figures are derived from persisted evidence.</p>
 
+<section aria-labelledby="actions-heading" style="margin-bottom:1rem;">
+  <h2 id="actions-heading" class="visually-hidden">Operator actions</h2>
+  <p>
+    <a href="/operator/runs/new" class="btn primary">+ Run Evaluation</a>
+    {% if has_demo %}
+    <span class="badge badge-unknown" title="Demo evidence is labeled and excluded from real qualification">demo data · {{ demo_counts }} runs</span>
+    {% endif %}
+  </p>
+  {% if has_demo %}
+  <form method="post" action="/operator/demo/clear" style="display:inline;" onsubmit="return confirm('Remove demo data only? This will delete only demo-labeled evidence and cannot be undone. User data will be preserved.')">
+    <button type="submit" class="btn" data-testid="clear-demo">Remove demo data</button>
+  </form>
+  <span class="muted" style="margin-left:0.5rem;">Demo evidence is clearly labeled and excluded from real qualification/recommendation evidence. Removal never reseeds automatically.</span>
+  {% else %}
+  <form method="post" action="/operator/demo/seed" style="display:inline;">
+    <button type="submit" class="btn" data-testid="seed-demo">Load demo data</button>
+  </form>
+  <span class="muted" style="margin-left:0.5rem;">Start with demo data or empty data — your choice. Loaded demo data will be labeled <span class="badge badge-unknown">demo</span>.</span>
+  {% endif %}
+</section>
+
 <section aria-labelledby="summary-heading">
   <h2 id="summary-heading">Summary</h2>
   <div class="cards">
@@ -52,7 +73,7 @@
     <tbody>
       {% for row in rows %}
       <tr data-run-id="{{ row.run.id }}">
-        <td>#{{ row.run.id }}</td>
+        <td>#{{ row.run.id }}{% if row.run.is_demo %} <span class="badge badge-unknown">demo</span>{% endif %}</td>
         <td>{{ row.logical_test.name if row.logical_test else row.test_version.capability_key if row.test_version else "—" }}</td>
         <td class="mono break">{{ row.model.exact_identifier if row.model else "—" }}</td>
         <td class="mono">{{ row.harness.harness_key if row.harness else "—" }}{% if row.harness and row.harness.version %} {{ row.harness.version }}{% endif %}</td>

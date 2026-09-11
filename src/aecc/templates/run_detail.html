@@ -1,8 +1,9 @@
 {% extends "base.html" %}
 {% block title %}Run #{{ detail.run.id }} · AECC Operator{% endblock %}
 {% block content %}
-<h1>Run #{{ detail.run.id }}</h1>
+<h1>Run #{{ detail.run.id }} {% if detail.run.is_demo %}<span class="badge badge-unknown">demo</span>{% endif %}</h1>
 <p><a href="/operator">← Back to overview</a> · <a href="/operator/qualifications">Qualification board</a></p>
+{% if detail.run.is_demo %}<p class="note"><span class="badge badge-unknown">demo</span> Demo evidence — clearly labeled and excluded from real qualification/recommendation evidence. Structural provenance via <span class="mono">is_demo</span>, not name-based detection.</p>{% endif %}
 
 <section aria-labelledby="identity-heading">
   <h2 id="identity-heading">Identity</h2>

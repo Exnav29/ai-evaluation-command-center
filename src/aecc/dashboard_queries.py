@@ -257,15 +257,21 @@ def fetch_run_detail(session: Session, run_id: int) -> dict | None:
     }
 
 
-def fetch_qualifications(session: Session) -> list[dict]:
+def fetch_qualifications(session: Session, *, include_demo: bool = False) -> list[dict]:
     """One row per harness+model+capability triple with qualification history.
 
     Current state is the newest decision for the exact triple. History is
     preserved in chronological order with evidence links.
+    By default demo decisions are excluded.
     """
-    decisions = list(
-        session.scalars(select(QualificationDecision).order_by(QualificationDecision.id.asc())).all()
-    )
+    if include_demo:
+        decisions = list(
+            session.scalars(select(QualificationDecision).order_by(QualificationDecision.id.asc())).all()
+        )
+    else:
+        decisions = list(
+            session.scalars(select(QualificationDecision).where(QualificationDecision.is_demo == False).order_by(QualificationDecision.id.asc())).all()  # noqa: E712
+        )
     if not decisions:
         return []
     by_triple: dict[tuple[int, int, int], list[QualificationDecision]] = {}
@@ -308,13 +314,21 @@ NON_PASS_REVIEW_VERDICTS = frozenset(
 )
 
 
-def fetch_summary(session: Session) -> dict:
-    """Overview summary cards derived from persisted evidence (no hard-coding)."""
+def fetch_summary(session: Session, *, include_demo: bool = False) -> dict:
+    """Overview summary cards derived from persisted evidence (no hard-coding).
+
+    By default demo rows (is_demo=True) are excluded from qualification counts
+    and treated as labeled but not real evidence. Pass include_demo=True for
+    debugging/demo-inclusive aggregates.
+    """
     from sqlalchemy import func as _func
 
-    total_runs = int(session.scalar(select(_func.count(Run.id))) or 0)
-
-    run_ids: list[int] = list(session.scalars(select(Run.id)).all())
+    if include_demo:
+        total_runs = int(session.scalar(select(_func.count(Run.id))) or 0)
+        run_ids: list[int] = list(session.scalars(select(Run.id)).all())
+    else:
+        total_runs = int(session.scalar(select(_func.count(Run.id)).where(Run.is_demo == False)) or 0)  # noqa: E712
+        run_ids: list[int] = list(session.scalars(select(Run.id).where(Run.is_demo == False)).all())  # noqa: E712
     needs_review_or_failing = 0
     unknown_or_unscored = 0
     if run_ids:
@@ -341,7 +355,10 @@ def fetch_summary(session: Session) -> dict:
             ):
                 needs_review_or_failing += 1
 
-    decisions = list(session.scalars(select(QualificationDecision)).all())
+    if include_demo:
+        decisions = list(session.scalars(select(QualificationDecision)).all())
+    else:
+        decisions = list(session.scalars(select(QualificationDecision).where(QualificationDecision.is_demo == False)).all())  # noqa: E712
     latest_by_triple: dict[tuple[int, int, int], QualificationDecision] = {}
     for d in decisions:
         key = (d.harness_id, d.model_id, d.capability_id)
