@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}Qualifications · AECC Operator{% endblock %}
+{% block content %}
+<h1>Qualification Board</h1>
+<p class="lede">Current qualification state per exact harness + model + capability triple, with full decision history and evidence drill-through.</p>
+
+{% if triples %}
+<div class="table-wrap">
+<table>
+  <caption class="visually-hidden">Qualification state per harness, model, and capability triple</caption>
+  <thead>
+    <tr>
+      <th scope="col">Harness</th>
+      <th scope="col">Model (exact identifier)</th>
+      <th scope="col">Capability</th>
+      <th scope="col">Current state</th>
+      <th scope="col">Decided / author / methodology</th>
+      <th scope="col">Restrictions / conditions</th>
+      <th scope="col">Evidence summary</th>
+      <th scope="col">Evidence</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for t in triples %}
+    <tr data-testid="qual-triple-{{ t.current.id }}">
+      <td class="mono">{{ t.harness.harness_key if t.harness else "—" }}{% if t.harness and t.harness.version %} {{ t.harness.version }}{% endif %}</td>
+      <td class="mono break">{{ t.model.exact_identifier if t.model else "—" }} <span class="muted">({{ t.model.provider if t.model else "—" }})</span></td>
+      <td class="mono">{{ t.capability.capability_key if t.capability else "—" }} {{ t.capability.version if t.capability else "" }}</td>
+      <td>
+        <span class="badge {{ badge_class("qual", t.current.state.value) }}">{{ t.current.state.value }}</span>
+        <span class="muted">({{ t.history|length }} decision{{ "s" if t.history|length != 1 else "" }})</span>
+      </td>
+      <td>{{ format_dt(t.current.decided_at) }} · {{ t.current.author }} · {{ t.current.methodology_version }}</td>
+      <td>{{ t.current.restrictions if t.current.restrictions else "—" }}</td>
+      <td>{{ t.current.evidence_summary if t.current.evidence_summary else "—" }}</td>
+      <td>
+        {% set links = t.evidence_by_qual.get(t.current.id, []) %}
+        {% if links %}
+          {% for link in links %}
+          {% if link.run_id %}<a href="/operator/runs/{{ link.run_id }}">run #{{ link.run_id }}</a>{% endif %}{% if not loop.last %} · {% endif %}
+          {% endfor %}
+        {% else %}
+        <span class="muted">no linked runs</span>
+        {% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+
+<h2>Decision history</h2>
+{% for t in triples %}
+<section aria-labelledby="triple-{{ t.current.id }}" class="triple-block">
+  <h3 id="triple-{{ t.current.id }}" class="mono">{{ t.harness.harness_key if t.harness else "?" }} + {{ t.model.model_key if t.model else "?" }} + {{ t.capability.capability_key if t.capability else "?" }}</h3>
+  <ol class="history">
+    {% for q in t.history %}
+    <li data-testid="qual-history-{{ q.id }}">
+      <span class="badge {{ badge_class("qual", q.state.value) }}">{{ q.state.value }}</span>
+      <span class="muted">{{ q.methodology_version }} · {{ format_dt(q.decided_at) }} · {{ q.author }}</span>
+      {% if q.id == t.current.id %}<strong> · current</strong>{% endif %}
+      {% if q.restrictions %}<br />Conditions: {{ q.restrictions }}{% endif %}
+      {% if q.evidence_summary %}<br />Evidence summary: {{ q.evidence_summary }}{% endif %}
+      {% set links = t.evidence_by_qual.get(q.id, []) %}
+      {% if links %}
+      <br />Evidence:
+        {% for link in links %}
+        {% if link.run_id %}<a href="/operator/runs/{{ link.run_id }}">run #{{ link.run_id }}</a>{% endif %}{% if not loop.last %} · {% endif %}
+        {% endfor %}
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ol>
+</section>
+{% endfor %}
+{% else %}
+<p>No qualification decisions recorded yet.</p>
+{% endif %}
+{% endblock %}

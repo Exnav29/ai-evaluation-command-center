@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+{% block title %}Run #{{ detail.run.id }} · AECC Operator{% endblock %}
+{% block content %}
+<h1>Run #{{ detail.run.id }}</h1>
+<p><a href="/operator">← Back to overview</a> · <a href="/operator/qualifications">Qualification board</a></p>
+
+<section aria-labelledby="identity-heading">
+  <h2 id="identity-heading">Identity</h2>
+  <dl class="facts">
+    <dt>Test</dt><dd>{{ detail.logical_test.name if detail.logical_test else "—" }} <span class="mono">({{ detail.logical_test.key if detail.logical_test else "—" }})</span></dd>
+    <dt>Test version</dt><dd>v{{ detail.test_version.version_number if detail.test_version else "—" }} · rubric <span class="mono">{{ detail.test_version.rubric_id if detail.test_version else "—" }}/{{ detail.test_version.rubric_version if detail.test_version else "—" }}</span></dd>
+    <dt>Source commit</dt><dd class="mono">{{ detail.test_version.source_commit if detail.test_version and detail.test_version.source_commit else (detail.run.source_commit if detail.run.source_commit else "Not recorded") }}</dd>
+    <dt>Harness</dt><dd class="mono">{{ detail.harness.harness_key if detail.harness else "—" }}{% if detail.harness and detail.harness.version %} {{ detail.harness.version }}{% endif %}{% if detail.harness and detail.harness.build %} ({{ detail.harness.build }}){% endif %}</dd>
+    <dt>Model (exact identifier)</dt><dd class="mono break">{{ detail.model.exact_identifier if detail.model else "—" }} <span class="muted">provider: {{ detail.model.provider if detail.model else "—" }}</span></dd>
+    <dt>Capability</dt><dd class="mono">{{ detail.capability.capability_key if detail.capability else "—" }} {{ detail.capability.version if detail.capability else "" }}</dd>
+    <dt>Run state</dt><dd><span class="badge {{ badge_class("runstate", detail.run.state.value if detail.run.state else none) }}">{{ detail.run.state.value if detail.run.state else "UNKNOWN" }}</span></dd>
+    <dt>Requested</dt><dd>{{ format_dt(detail.run.requested_at) }}</dd>
+    <dt>Started / finished</dt><dd>{{ format_dt(detail.run.started_at) }} / {{ format_dt(detail.run.finished_at) }}</dd>
+    <dt>Latest verdict</dt>
+    <dd>
+      {% if detail.latest_score %}
+      <span class="badge {{ badge_class("verdict", detail.latest_score.verdict.value) }}">{{ detail.latest_score.verdict.value }}</span>
+      {% if detail.latest_score.total_score is not none %} score {{ "%.2f"|format(detail.latest_score.total_score) }}{% endif %}
+      {% else %}
+      <span class="badge badge-unknown">UNKNOWN</span> Not scored
+      {% endif %}
+    </dd>
+    <dt>Current qualification</dt>
+    <dd>
+      {% if detail.qual_current %}
+      <span class="badge {{ badge_class("qual", detail.qual_current.state.value) }}">{{ detail.qual_current.state.value }}</span>
+      <span class="muted">decided {{ format_dt(detail.qual_current.decided_at) }} by {{ detail.qual_current.author }}</span>
+      {% else %}
+      <span class="badge badge-unknown">UNKNOWN</span> No qualification decision for this harness + model + capability
+      {% endif %}
+    </dd>
+  </dl>
+</section>
+
+<section aria-labelledby="attempts-heading">
+  <h2 id="attempts-heading">Attempts ({{ detail.attempts|length }})</h2>
+  {% if detail.attempts %}
+  <div class="table-wrap">
+  <table>
+    <caption class="visually-hidden">All attempts in attempt-number order</caption>
+    <thead>
+      <tr>
+        <th scope="col">Attempt</th>
+        <th scope="col">Timing</th>
+        <th scope="col">Exit code</th>
+        <th scope="col">Process outcome</th>
+        <th scope="col">Deliverable outcome</th>
+        <th scope="col">Task outcome</th>
+        <th scope="col">Permission</th>
+        <th scope="col">Intervention / timeout</th>
+        <th scope="col">Tokens in/out</th>
+        <th scope="col">Cost</th>
+        <th scope="col">Failure classification</th>
+        <th scope="col">Sealed</th>
+        <th scope="col">Evidence</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for a in detail.attempts %}
+      <tr data-attempt="{{ a.attempt_number }}">
+        <td>#{{ a.attempt_number }}</td>
+        <td>{{ format_elapsed(a.elapsed_seconds) }}{% if a.time_to_first_output_seconds is not none %} <span class="muted">(first output {{ format_elapsed(a.time_to_first_output_seconds) }})</span>{% endif %}</td>
+        <td>{% if a.exit_code is not none %}{{ a.exit_code }}{% else %}Not recorded{% endif %}</td>
+        <td><span class="badge {{ badge_class("process", a.process_outcome.value if a.process_outcome else none) }}">{{ a.process_outcome.value if a.process_outcome else "UNKNOWN" }}</span></td>
+        <td><span class="badge {{ badge_class("deliverable", a.deliverable_outcome.value if a.deliverable_outcome else none) }}">{{ a.deliverable_outcome.value if a.deliverable_outcome else "UNKNOWN" }}</span></td>
+        <td><span class="badge {{ badge_class("task", a.task_outcome.value if a.task_outcome else none) }}">{{ a.task_outcome.value if a.task_outcome else "UNKNOWN" }}</span></td>
+        <td>{% if a.permission_denied %}<span class="badge badge-review">permission-denied</span>{% if a.permission_denial_evidence %} <span class="muted">{{ a.permission_denial_evidence }}</span>{% endif %}{% else %}<span class="muted">no denial</span>{% endif %}</td>
+        <td>
+          {% if a.human_intervention %}<span class="badge badge-review">human-intervention</span>{% endif %}
+          {% if a.timed_out %}<span class="badge badge-review">timeout</span>{% endif %}
+          {% if a.cancelled %}<span class="badge badge-excluded">cancelled</span>{% endif %}
+          {% if not a.human_intervention and not a.timed_out and not a.cancelled %}<span class="muted">—</span>{% endif %}
+        </td>
+        <td>{{ format_tokens(a.tokens_input) }} / {{ format_tokens(a.tokens_output) }}</td>
+        <td title="{{ format_cost_title(a.cost, a.cost_source) }}">{{ format_cost(a.cost) }}{% if a.cost_source %} <span class="muted">({{ a.cost_source }})</span>{% endif %}</td>
+        <td class="mono">{{ a.failure_primary.value if a.failure_primary else "—" }}{% if a.failure_secondary %} / {{ a.failure_secondary.value }}{% endif %}</td>
+        <td>{% if a.sealed_at %}sealed {{ format_dt(a.sealed_at) }}{% else %}unsealed{% endif %}</td>
+        <td class="mono break">{{ a.raw_evidence_location if a.raw_evidence_location else "—" }}{% if a.artifact_refs %} · artifacts: {{ a.artifact_refs }}{% endif %}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  <p class="note">Process exit code is a raw fact: exit code 0 does not imply task success. Process, deliverable, task, and verdict are separate axes.</p>
+  {% else %}
+  <p>No attempts recorded for this run.</p>
+  {% endif %}
+</section>
+
+<section aria-labelledby="scores-heading">
+  <h2 id="scores-heading">Score / verdict history ({{ detail.scores|length }})</h2>
+  {% if detail.scores %}
+  <ol class="history">
+    {% for s in detail.scores %}
+    <li data-testid="score-rev-{{ s.id }}">
+      <span class="badge {{ badge_class("verdict", s.verdict.value) }}">{{ s.verdict.value }}</span>
+      {% if s.total_score is not none %}<span>score {{ "%.2f"|format(s.total_score) }}</span>{% endif %}
+      <span class="muted">rubric {{ s.rubric_version }} · {{ format_dt(s.created_at) }} · evaluator {{ s.evaluator_identity if s.evaluator_identity else "—" }}</span>
+      {% if s.id == detail.latest_score.id %}<strong> · latest</strong>{% endif %}
+      {% if s.notes %}<br /><span>{{ s.notes }}</span>{% endif %}
+      {% if s.dimension_scores %}<br /><span class="mono muted">{{ s.dimension_scores }}</span>{% endif %}
+    </li>
+    {% endfor %}
+  </ol>
+  {% else %}
+  <p><span class="badge badge-unknown">UNKNOWN</span> No score revisions recorded — verdict unknown, not pass.</p>
+  {% endif %}
+</section>
+
+<section aria-labelledby="events-heading">
+  <h2 id="events-heading">Interventions &amp; exclusions</h2>
+  {% if detail.interventions %}
+  <h3>Intervention events ({{ detail.interventions|length }})</h3>
+  <ul class="history">
+    {% for ev in detail.interventions %}
+    <li><span class="badge badge-review">intervention</span> <strong>{{ ev.kind }}</strong> — {{ ev.reason }} <span class="muted">({{ ev.actor if ev.actor else "—" }}, {{ format_dt(ev.created_at) }})</span></li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p>No intervention events recorded.</p>
+  {% endif %}
+  {% if detail.exclusions %}
+  <h3>Exclusion events ({{ detail.exclusions|length }})</h3>
+  <ul class="history">
+    {% for ev in detail.exclusions %}
+    <li><span class="badge badge-excluded">excluded</span> {{ ev.reason }} <span class="muted">(author {{ ev.author }}, {{ format_dt(ev.created_at) }}{% if ev.scope %}, scope {{ ev.scope }}{% endif %}{% if ev.methodology_version %}, methodology {{ ev.methodology_version }}{% endif %})</span></li>
+    {% endfor %}
+  </ul>
+  <p class="note">Excluded evidence remains inspectable; exclusion is not deletion.</p>
+  {% else %}
+  <p>No exclusion events recorded.</p>
+  {% endif %}
+</section>
+
+<section aria-labelledby="qual-heading">
+  <h2 id="qual-heading">Qualification for this harness + model + capability</h2>
+  {% if detail.qual_history %}
+  <p>Current:
+    <span class="badge {{ badge_class("qual", detail.qual_current.state.value) }}">{{ detail.qual_current.state.value }}</span>
+    <span class="muted">{{ detail.qual_current.methodology_version }} · {{ format_dt(detail.qual_current.decided_at) }} · {{ detail.qual_current.author }}</span>
+    {% if detail.qual_current.restrictions %}<br />Conditions: {{ detail.qual_current.restrictions }}{% endif %}
+    {% if detail.qual_current.evidence_summary %}<br />Evidence summary: {{ detail.qual_current.evidence_summary }}{% endif %}
+  </p>
+  <h3>Decision history ({{ detail.qual_history|length }})</h3>
+  <ol class="history">
+    {% for q in detail.qual_history %}
+    <li data-testid="qual-decision-{{ q.id }}">
+      <span class="badge {{ badge_class("qual", q.state.value) }}">{{ q.state.value }}</span>
+      <span class="muted">{{ q.methodology_version }} · {{ format_dt(q.decided_at) }} · {{ q.author }}</span>
+      {% if q.id == detail.qual_current.id %}<strong> · current</strong>{% endif %}
+      {% if q.restrictions %}<br />Conditions: {{ q.restrictions }}{% endif %}
+      {% if q.evidence_summary %}<br />Evidence summary: {{ q.evidence_summary }}{% endif %}
+      {% set links = detail.evidence_by_qual.get(q.id, []) %}
+      {% if links %}
+      <br />Evidence:
+        {% for link in links %}
+        {% if link.run_id %}<a href="/operator/runs/{{ link.run_id }}">run #{{ link.run_id }}</a>{% endif %}{% if link.attempt_id %} <span class="muted">(attempt id {{ link.attempt_id }})</span>{% endif %}{% if not loop.last %} · {% endif %}
+        {% endfor %}
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ol>
+  {% else %}
+  <p><span class="badge badge-unknown">UNKNOWN</span> No qualification decision recorded for this exact harness + model + capability.</p>
+  {% endif %}
+</section>
+{% endblock %}
