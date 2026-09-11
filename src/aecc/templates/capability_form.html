@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}{% if mode == "new" %}Add capability{% else %}Edit capability{% endif %} · AECC{% endblock %}
+{% block content %}
+<h1>{% if mode == "new" %}Add capability{% else %}Edit capability #{{ capability.id }}{% endif %}</h1>
+<p class="lede">Capability keys are hierarchical, e.g. <span class="mono">backend.fastapi.api_implementation</span>. Versioning is retained; editing updates metadata while preserving the capability id used by historical qualification links.</p>
+<form method="post" action="{% if mode == 'new' %}/operator/capabilities{% else %}/operator/capabilities/{{ capability.id }}/edit{% endif %}" class="form">
+  <div class="form-group">
+    <label for="capability_key">Capability key</label>
+    <input type="text" id="capability_key" name="capability_key" required value="{{ form.capability_key or '' }}" class="input" placeholder="backend.fastapi.api_implementation" />
+    {% if errors.capability_key %}<p class="error">{{ errors.capability_key }}</p>{% endif %}
+  </div>
+  <div class="form-group">
+    <label for="version">Version</label>
+    <input type="text" id="version" name="version" required value="{{ form.version or '' }}" class="input" placeholder="v1" />
+    {% if errors.version %}<p class="error">{{ errors.version }}</p>{% endif %}
+  </div>
+  <div class="form-group">
+    <label for="display_name">Display name</label>
+    <input type="text" id="display_name" name="display_name" value="{{ form.display_name or '' }}" class="input" placeholder="FastAPI Implementation" />
+  </div>
+  <div class="form-group">
+    <label for="parent_id">Parent capability (optional)</label>
+    <select id="parent_id" name="parent_id" class="input">
+      <option value="">— No parent (root) —</option>
+      {% for c in capabilities %}
+      <option value="{{ c.id }}" {% if form.parent_id and form.parent_id|string == c.id|string %}selected{% endif %}>{{ c.capability_key }} {{ c.version }}{% if c.display_name %} — {{ c.display_name }}{% endif %}</option>
+      {% endfor %}
+    </select>
+    {% if errors.parent_id %}<p class="error">{{ errors.parent_id }}</p>{% endif %}
+  </div>
+  <div class="form-group">
+    <label for="definition">Definition</label>
+    <textarea id="definition" name="definition" rows="3" class="input">{{ form.definition or '' }}</textarea>
+  </div>
+  <div class="form-group">
+    <label for="description">Description / metadata</label>
+    <textarea id="description" name="description" rows="3" class="input">{{ form.description or '' }}</textarea>
+  </div>
+  <div class="form-group checkbox">
+    <label><input type="checkbox" name="is_active" {% if form.is_active %}checked{% endif %} /> Active</label>
+    <span class="muted">Inactive capabilities remain in history but are hidden from default selection.</span>
+  </div>
+  <div class="form-actions">
+    <button type="submit" class="btn primary">{% if mode == "new" %}Create capability{% else %}Save changes{% endif %}</button>
+    <a href="{% if mode == 'new' %}/operator/capabilities{% else %}/operator/capabilities/{{ capability.id }}{% endif %}" class="btn">Cancel</a>
+  </div>
+</form>
+{% endblock %}

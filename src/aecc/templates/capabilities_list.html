@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Capabilities · AECC Operator{% endblock %}
+{% block content %}
+<h1>Capability Catalog</h1>
+<p class="lede">Hierarchical capabilities such as <span class="mono">backend.fastapi.api_implementation</span> with version, parent, and active status. Historical qualification links are preserved per capability id.</p>
+<p><a href="/operator/capabilities/new" class="btn">+ Add capability</a></p>
+{% if capabilities %}
+<div class="table-wrap">
+<table>
+  <caption class="visually-hidden">Capability catalog, ordered by key and version</caption>
+  <thead>
+    <tr>
+      <th scope="col">Key</th>
+      <th scope="col">Version</th>
+      <th scope="col">Display name</th>
+      <th scope="col">Parent</th>
+      <th scope="col">Status</th>
+      <th scope="col">Description</th>
+      <th scope="col">Detail</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for cap in capabilities %}
+    <tr data-capability-id="{{ cap.id }}" data-capability-key="{{ cap.capability_key }}">
+      <td class="mono break">{{ cap.capability_key }}</td>
+      <td class="mono">{{ cap.version }}</td>
+      <td>{{ cap.display_name or "—" }}</td>
+      <td class="mono">
+        {% set p = parents.get(cap.id) %}
+        {% if p %}{{ p.capability_key }} {{ p.version }}{% else %}—{% endif %}
+      </td>
+      <td>
+        {% if cap.is_active %}<span class="badge badge-pass">active</span>{% else %}<span class="badge badge-excluded">inactive</span>{% endif %}
+      </td>
+      <td class="muted">{{ cap.description or cap.definition or "—" }}</td>
+      <td><a href="/operator/capabilities/{{ cap.id }}">Inspect</a> · <a href="/operator/capabilities/{{ cap.id }}/edit">Edit</a></td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+{% else %}
+<p>No capabilities recorded yet. <a href="/operator/capabilities/new">Add the first capability</a>.</p>
+{% endif %}
+{% endblock %}

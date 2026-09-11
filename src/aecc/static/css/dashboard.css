@@ -112,6 +112,18 @@ a:focus-visible, button:focus-visible { outline: 3px solid var(--accent); outlin
 
 .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
 
+.form { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 1.5rem; max-width: 640px; }
+.form-group { margin-bottom: 1rem; display: flex; flex-direction: column; gap: 0.3rem; }
+.form-group label { font-weight: 600; font-size: 0.9rem; }
+.input { padding: 0.5rem 0.65rem; border: 1px solid var(--line); border-radius: 6px; font: inherit; }
+.input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+.error { color: var(--fail); font-size: 0.85rem; margin: 0; }
+.form-actions { display: flex; gap: 0.75rem; margin-top: 1.2rem; flex-wrap: wrap; }
+.btn { display: inline-block; padding: 0.5rem 0.9rem; border-radius: 6px; border: 1px solid var(--line); background: #fff; color: var(--ink); text-decoration: none; font-weight: 600; font-size: 0.9rem; cursor: pointer; }
+.btn.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+.btn:hover, .btn:focus { text-decoration: underline; }
+.checkbox label { display: flex; gap: 0.5rem; align-items: center; }
+
 @media (max-width: 700px) {
   .facts { grid-template-columns: 1fr; }
   table { min-width: 640px; font-size: 0.85rem; }

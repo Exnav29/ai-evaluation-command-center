@@ -36,6 +36,7 @@ from sqlalchemy import (
     String,
     Text,
     UniqueConstraint,
+    text as sa_text,
 )
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
@@ -167,7 +168,15 @@ class Model(Base):
     model_key: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
     provider: Mapped[str] = mapped_column(String(255), nullable=False)
     exact_identifier: Mapped[str] = mapped_column(String(500), nullable=False)
+    display_name: Mapped[str | None] = mapped_column(String(500), nullable=True)
     pricing_class: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    pricing_tier: Mapped[str | None] = mapped_column(String(20), nullable=True)  # free/paid/unknown
+    price_input: Mapped[float | None] = mapped_column(Float, nullable=True)
+    price_output: Mapped[float | None] = mapped_column(Float, nullable=True)
+    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True, server_default=sa_text("1"))
+    harness_config: Mapped[str | None] = mapped_column(Text, nullable=True)  # JSON snapshot of supported harnesses/config
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    updated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     config_params: Mapped[str | None] = mapped_column(Text, nullable=True)  # JSON snapshot
 
 
@@ -180,9 +189,19 @@ class Capability(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     capability_key: Mapped[str] = mapped_column(String(255), nullable=False)
     version: Mapped[str] = mapped_column(String(64), nullable=False)
+    parent_id: Mapped[int | None] = mapped_column(
+        ForeignKey("capabilities.id", ondelete="SET NULL"), nullable=True
+    )
+    display_name: Mapped[str | None] = mapped_column(String(500), nullable=True)
     definition: Mapped[str | None] = mapped_column(Text, nullable=True)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True, server_default=sa_text("1"))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=_utcnow)
+    updated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    parent: Mapped["Capability | None"] = relationship(
+        "Capability", remote_side="Capability.id", backref="children", foreign_keys="[Capability.parent_id]"
+    )
 
 
 # ---------------------------------------------------------------------------

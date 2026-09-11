@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Capability {{ capability.capability_key }} · AECC{% endblock %}
+{% block content %}
+<h1>Capability: <span class="mono break">{{ capability.capability_key }}</span></h1>
+<p><a href="/operator/capabilities">← Back to capabilities</a> · <a href="/operator/capabilities/{{ capability.id }}/edit">Edit</a></p>
+
+<section aria-labelledby="identity-heading">
+  <h2 id="identity-heading">Identity</h2>
+  <dl class="facts">
+    <dt>Key</dt><dd class="mono break">{{ capability.capability_key }}</dd>
+    <dt>Version</dt><dd class="mono">{{ capability.version }}</dd>
+    <dt>Display name</dt><dd>{{ capability.display_name or "—" }}</dd>
+    <dt>Status</dt><dd>{% if capability.is_active %}<span class="badge badge-pass">active</span>{% else %}<span class="badge badge-excluded">inactive</span>{% endif %}</dd>
+    <dt>Parent</dt><dd class="mono">{% if parent %}<a href="/operator/capabilities/{{ parent.id }}">{{ parent.capability_key }} {{ parent.version }}</a>{% else %}— (root){% endif %}</dd>
+    <dt>Ancestors</dt><dd class="mono">{% if ancestors %}{% for a in ancestors %}<a href="/operator/capabilities/{{ a.id }}">{{ a.capability_key }}</a>{% if not loop.last %} → {% endif %}{% endfor %}{% else %}—{% endif %}</dd>
+    <dt>Definition</dt><dd>{{ capability.definition or "—" }}</dd>
+    <dt>Description</dt><dd>{{ capability.description or "—" }}</dd>
+    <dt>Created</dt><dd>{{ format_dt(capability.created_at) }}</dd>
+    <dt>Updated</dt><dd>{{ format_dt(capability.updated_at) if capability.updated_at else "—" }}</dd>
+  </dl>
+</section>
+
+<section aria-labelledby="children-heading">
+  <h2 id="children-heading">Children ({{ children|length }})</h2>
+  {% if children %}
+  <ul class="history">
+    {% for child in children %}
+    <li><a href="/operator/capabilities/{{ child.id }}" class="mono">{{ child.capability_key }} {{ child.version }}</a> {% if child.is_active %}<span class="badge badge-pass">active</span>{% else %}<span class="badge badge-excluded">inactive</span>{% endif %} — {{ child.display_name or child.description or "" }}</li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p class="muted">No child capabilities.</p>
+  {% endif %}
+</section>
+
+<section aria-labelledby="qual-heading">
+  <h2 id="qual-heading">Qualification history for this capability ({{ qualifications|length }})</h2>
+  {% if qualifications %}
+  <ol class="history">
+    {% for q in qualifications %}
+    <li><span class="badge {{ badge_class("qual", q.state.value) }}">{{ q.state.value }}</span> <span class="muted">{{ q.methodology_version }} · {{ format_dt(q.decided_at) }} · {{ q.author }}</span> harness {{ q.harness_id }} + model {{ q.model_id }}</li>
+    {% endfor %}
+  </ol>
+  <p class="note">Qualification is keyed by harness + model + capability. This view filters to the current capability id.</p>
+  {% else %}
+  <p class="muted">No qualification decisions for this exact capability yet.</p>
+  {% endif %}
+</section>
+{% endblock %}

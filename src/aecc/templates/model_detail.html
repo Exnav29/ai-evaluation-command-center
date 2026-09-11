@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Model {{ model.model_key }} · AECC{% endblock %}
+{% block content %}
+<h1>Model: <span class="mono">{{ model.model_key }}</span></h1>
+<p><a href="/operator/models">← Back to models</a> · <a href="/operator/models/{{ model.id }}/edit">Edit</a></p>
+
+<section aria-labelledby="identity-heading">
+  <h2 id="identity-heading">Identity</h2>
+  <dl class="facts">
+    <dt>Model key</dt><dd class="mono">{{ model.model_key }}</dd>
+    <dt>Provider</dt><dd class="mono">{{ model.provider }}</dd>
+    <dt>Exact identifier</dt><dd class="mono break">{{ model.exact_identifier }} <span class="muted">(evidence identity)</span></dd>
+    <dt>Display name</dt><dd>{{ model.display_name or "—" }}</dd>
+    <dt>Pricing tier</dt>
+    <dd>
+      {% if model.pricing_tier == "free" %}<span class="badge badge-pass">free</span>
+      {% elif model.pricing_tier == "paid" %}<span class="badge badge-review">paid</span>
+      {% else %}<span class="badge badge-unknown">unknown</span>{% endif %}
+      {% if model.pricing_tier == "unknown" %}<span class="muted"> — cost treated as not recorded, not zero</span>{% endif %}
+    </dd>
+    <dt>Input price</dt><dd>{% if model.price_input is not none %}${{ "%.4f"|format(model.price_input) }}{% else %}<span class="muted">Not recorded</span>{% endif %}</dd>
+    <dt>Output price</dt><dd>{% if model.price_output is not none %}${{ "%.4f"|format(model.price_output) }}{% else %}<span class="muted">Not recorded</span>{% endif %}</dd>
+    <dt>Status</dt><dd>{% if model.is_active %}<span class="badge badge-pass">active</span>{% else %}<span class="badge badge-excluded">inactive</span>{% endif %}</dd>
+    <dt>Harness / config</dt><dd class="mono break">{{ model.harness_config or model.config_params or "—" }}</dd>
+    <dt>Description</dt><dd>{{ model.description or "—" }}</dd>
+    <dt>Updated</dt><dd>{{ format_dt(model.updated_at) if model.updated_at else "—" }}</dd>
+  </dl>
+  <p class="note">Exact provider/model identifier remains the evidence identity. Aliases must not erase it; this value appears in run evidence and qualification.</p>
+</section>
+
+<section aria-labelledby="qual-heading">
+  <h2 id="qual-heading">Qualification history for this model ({{ qualifications|length }})</h2>
+  {% if qualifications %}
+  <ol class="history">
+    {% for q in qualifications %}
+    <li><span class="badge {{ badge_class("qual", q.state.value) }}">{{ q.state.value }}</span> <span class="muted">{{ q.methodology_version }} · {{ format_dt(q.decided_at) }} · {{ q.author }}</span> harness {{ q.harness_id }} + capability {{ q.capability_id }}</li>
+    {% endfor %}
+  </ol>
+  {% else %}
+  <p class="muted">No qualification decisions for this exact model yet.</p>
+  {% endif %}
+</section>
+{% endblock %}

@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Model Registry · AECC Operator{% endblock %}
+{% block content %}
+<h1>Model Registry</h1>
+<p class="lede">Provider + exact model identifier is the evidence identity. Pricing tier is <span class="mono">free</span>, <span class="mono">paid</span>, or <span class="mono">unknown</span>; input/output pricing is shown when known. Active/inactive controls default selection without deleting history.</p>
+<p><a href="/operator/models/new" class="btn">+ Add model</a></p>
+{% if models %}
+<div class="table-wrap">
+<table>
+  <caption class="visually-hidden">Model registry, ordered by provider and key</caption>
+  <thead>
+    <tr>
+      <th scope="col">Model key</th>
+      <th scope="col">Provider</th>
+      <th scope="col">Exact identifier</th>
+      <th scope="col">Display name</th>
+      <th scope="col">Pricing</th>
+      <th scope="col">I/O price</th>
+      <th scope="col">Status</th>
+      <th scope="col">Harness/config</th>
+      <th scope="col">Detail</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for m in models %}
+    <tr data-model-id="{{ m.id }}" data-model-key="{{ m.model_key }}">
+      <td class="mono">{{ m.model_key }}</td>
+      <td class="mono">{{ m.provider }}</td>
+      <td class="mono break">{{ m.exact_identifier }}</td>
+      <td>{{ m.display_name or "—" }}</td>
+      <td>
+        {% if m.pricing_tier == "free" %}<span class="badge badge-pass">free</span>
+        {% elif m.pricing_tier == "paid" %}<span class="badge badge-review">paid</span>
+        {% else %}<span class="badge badge-unknown">unknown</span>{% endif %}
+      </td>
+      <td class="mono">
+        {% if m.price_input is not none or m.price_output is not none %}
+          {{ m.price_input if m.price_input is not none else "—" }} / {{ m.price_output if m.price_output is not none else "—" }}
+        {% else %}
+          <span class="muted">Not recorded</span>
+        {% endif %}
+      </td>
+      <td>{% if m.is_active %}<span class="badge badge-pass">active</span>{% else %}<span class="badge badge-excluded">inactive</span>{% endif %}</td>
+      <td class="mono break">{{ m.harness_config or m.config_params or "—" }}</td>
+      <td><a href="/operator/models/{{ m.id }}">Inspect</a> · <a href="/operator/models/{{ m.id }}/edit">Edit</a></td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+{% else %}
+<p>No models registered yet. <a href="/operator/models/new">Add the first model</a>.</p>
+{% endif %}
+{% endblock %}

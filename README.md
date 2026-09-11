@@ -46,6 +46,20 @@ The project is under active development.
 
 The initial OpenCode environment has been established and multiple free models have passed basic connectivity tests. Formal planning and engineering benchmarks are now being conducted using preregistered specifications and scoring rubrics.
 
+## Roadmap
+
+**Working Command Center → AI Workforce Intelligence → Publication / Expansion.**
+
+1. **Working Command Center (current)** — Registry foundation: capability catalog and model registry with hierarchical capability keys (e.g. `backend.fastapi.api_implementation`), active/inactive stewardship, versioned definitions, and exact provider/model evidence identity, plus an operator dashboard that preserves all historical evidence.
+
+2. **AI Workforce Intelligence** — Evidence-based capability mapping: which harness + model handles which capability reliably, where free models suffice, and where frontier escalation is actually needed; comparisons, qualification progression, and cost/timing insights derived from preserved runs.
+
+3. **Publication / Expansion** — Sanitized stakeholder and public projections, safe datasets, and additional execution/harness capabilities built on the same evidence model without weakening prior guarantees.
+
+### Model selection principle
+
+There is no universal "best model." Model selection is **capability-specific** and **evidence-based**: a model is considered for a capability only when preserved runs, scores, failure classifications, and qualification decisions for that exact harness + model + capability support it. Past success elsewhere is not substituted for evidence.
+
 ## Reproducing evaluations
 
 The goal is for anyone to be able to clone this repository, configure their own models and harnesses, run the same or modified evaluations, and compare their findings with ours.
