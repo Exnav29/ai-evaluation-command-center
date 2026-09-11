@@ -47,6 +47,9 @@
   </div>
 </section>
 
+{% set chart_prefix = "overview" %}
+{% include "charts_section.html" %}
+
 <section aria-labelledby="runs-heading">
   <h2 id="runs-heading">Recent runs</h2>
   {% if rows %}

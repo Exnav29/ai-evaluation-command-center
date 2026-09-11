@@ -1,0 +1,140 @@
+{# Shared Milestone 1 chart panels. Expects `charts` payload + `chart_prefix` string. #}
+{# Server tables inside <details> are authoritative; ECharts canvases are progressive enhancement. #}
+<section aria-labelledby="{{ chart_prefix }}-charts-heading" class="cc-charts">
+  <div class="cc-charts-head">
+    <h2 id="{{ chart_prefix }}-charts-heading">Decision-support visuals</h2>
+    <p class="muted" style="margin:0">Charts render from the same persisted evidence as the tables below. UNKNOWN stays unknown · missing cost/time/score is never zero · demo excluded by default · click a chart to drill into run evidence.</p>
+  </div>
+  <div class="cc-grid">
+    <div class="cc-panel wide">
+      <h3>Qualification-state distribution</h3>
+      <p class="cc-sub">Stored operator decisions, current per exact harness + model + capability triple. {{ charts.qualification.triples_total }} triples · demo excluded.</p>
+      <div id="{{ chart_prefix }}-chart-qual" data-cc-chart="qual" class="cc-chart" role="img" aria-label="Qualification state distribution: {% for l in charts.qualification.labels %}{{ l }} {{ charts.qualification.counts[loop.index0] }}{% if not loop.last %}, {% endif %}{% endfor %}"></div>
+      <script id="{{ chart_prefix }}-chart-qual-data" type="application/json">{{ charts.qualification | tojson }}</script>
+      {% if not charts.qualification.triples_total %}
+      <p class="cc-empty">No qualification decisions yet — the table below is authoritative.</p>
+      {% endif %}
+      <details class="cc-fallback">
+        <summary>Underlying values (table)</summary>
+        <div class="table-wrap"><table class="mini-table">
+          <caption class="visually-hidden">Qualification state counts</caption>
+          <thead><tr><th scope="col">State</th><th scope="col">Triples</th></tr></thead>
+          <tbody>
+            {% for l in charts.qualification.labels %}
+            <tr><td><span class="badge {{ badge_class("qual", l) }}">{{ l }}</span></td><td>{{ charts.qualification.counts[loop.index0] }}</td></tr>
+            {% endfor %}
+          </tbody>
+        </table></div>
+      </details>
+      <p class="cc-links"><a href="/operator/qualifications">Open qualification board</a> · <a href="/operator/qualification">Open computed qualification</a></p>
+    </div>
+
+    <div class="cc-panel wide">
+      <h3>Model + harness performance</h3>
+      <p class="cc-sub">Completed runs by latest verdict per run. UNKNOWN/unscored, infrastructure, and excluded runs are shown separately and never counted as pass.</p>
+      <div id="{{ chart_prefix }}-chart-verdict" data-cc-chart="verdict" class="cc-chart" role="img" aria-label="Verdict distribution per model and harness group"></div>
+      <script id="{{ chart_prefix }}-chart-verdict-data" type="application/json">{{ charts.verdict | tojson }}</script>
+      {% if not charts.verdict.groups %}
+      <p class="cc-empty">No completed evaluation evidence in this context yet.</p>
+      {% endif %}
+      <details class="cc-fallback">
+        <summary>Underlying values (table)</summary>
+        <div class="table-wrap"><table class="mini-table">
+          <caption class="visually-hidden">Verdict counts per model and harness</caption>
+          <thead><tr><th scope="col">Group</th><th scope="col">Pass</th><th scope="col">Findings</th><th scope="col">Review</th><th scope="col">Fail</th><th scope="col">Infra</th><th scope="col">Excluded</th><th scope="col">Unknown</th><th scope="col">Pass rate</th></tr></thead>
+          <tbody>
+            {% for g in charts.verdict.groups %}
+            <tr data-chart-group="{{ g.label }}">
+              <td class="mono">{{ g.label }}</td>
+              <td>{{ g.counts.PASS }}</td><td>{{ g.counts.PASS_WITH_FINDINGS }}</td>
+              <td>{{ g.counts.NEEDS_REVIEW }}</td><td>{{ g.counts.FAIL }}</td>
+              <td>{{ g.counts.INFRASTRUCTURE_FAILURE }}</td><td>{{ g.counts.EXCLUDED }}</td>
+              <td>{{ g.counts.UNKNOWN }}</td>
+              <td>{% if g.pass_rate is not none %}{{ "%.1f"|format(g.pass_rate * 100) }}%{% else %}n/a{% endif %} (n={{ g.evaluated }})</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table></div>
+      </details>
+    </div>
+
+    <div class="cc-panel">
+      <h3>Cost comparison · where known</h3>
+      <p class="cc-sub">Latest attempt cost per run. Missing cost is “Not recorded”, never $0.00. Known $0.00 (free tier) is shown as zero.</p>
+      <div id="{{ chart_prefix }}-chart-cost" data-cc-chart="cost" class="cc-chart" role="img" aria-label="Average known cost per model and harness group"></div>
+      <script id="{{ chart_prefix }}-chart-cost-data" type="application/json">{{ charts.cost | tojson }}</script>
+      {% if not charts.cost.groups %}
+      <p class="cc-empty">No completed evaluation evidence in this context yet.</p>
+      {% endif %}
+      <details class="cc-fallback">
+        <summary>Underlying values (table)</summary>
+        <div class="table-wrap"><table class="mini-table">
+          <caption class="visually-hidden">Cost aggregates per model and harness</caption>
+          <thead><tr><th scope="col">Group</th><th scope="col">Known (n)</th><th scope="col">Unknown (n)</th><th scope="col">Avg known</th><th scope="col">Sum known</th></tr></thead>
+          <tbody>
+            {% for g in charts.cost.groups %}
+            <tr>
+              <td class="mono">{{ g.label }}</td><td>{{ g.n_known }}</td><td>{{ g.n_unknown }}</td>
+              <td>{% if g.avg_known is not none %}${{ "%.4f"|format(g.avg_known) }}{% else %}Not recorded{% endif %}</td>
+              <td>{% if g.sum_known is not none %}${{ "%.4f"|format(g.sum_known) }}{% else %}Not recorded{% endif %}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table></div>
+      </details>
+    </div>
+
+    <div class="cc-panel">
+      <h3>Elapsed-time comparison · where known</h3>
+      <p class="cc-sub">Latest attempt elapsed seconds per run. Missing timing is “Not recorded”, never 0s.</p>
+      <div id="{{ chart_prefix }}-chart-elapsed" data-cc-chart="elapsed" class="cc-chart" role="img" aria-label="Average elapsed time per model and harness group"></div>
+      <script id="{{ chart_prefix }}-chart-elapsed-data" type="application/json">{{ charts.elapsed | tojson }}</script>
+      {% if not charts.elapsed.groups %}
+      <p class="cc-empty">No completed evaluation evidence in this context yet.</p>
+      {% endif %}
+      <details class="cc-fallback">
+        <summary>Underlying values (table)</summary>
+        <div class="table-wrap"><table class="mini-table">
+          <caption class="visually-hidden">Elapsed aggregates per model and harness</caption>
+          <thead><tr><th scope="col">Group</th><th scope="col">Known (n)</th><th scope="col">Not recorded (n)</th><th scope="col">Avg</th><th scope="col">Range</th></tr></thead>
+          <tbody>
+            {% for g in charts.elapsed.groups %}
+            <tr>
+              <td class="mono">{{ g.label }}</td><td>{{ g.n_known }}</td><td>{{ g.n_unknown }}</td>
+              <td>{% if g.avg_known is not none %}{{ "%.1f"|format(g.avg_known) }}s{% else %}Not recorded{% endif %}</td>
+              <td>{% if g.min_known is not none %}{{ "%.1f"|format(g.min_known) }}–{{ "%.1f"|format(g.max_known) }}s{% else %}Not recorded{% endif %}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table></div>
+      </details>
+    </div>
+
+    <div class="cc-panel wide">
+      <h3>Score / reliability patterns</h3>
+      <p class="cc-sub">Latest total_score per run where scored. Unscored/UNKNOWN runs are counted separately and never averaged as zero.</p>
+      <div id="{{ chart_prefix }}-chart-scores" data-cc-chart="scores" class="cc-chart" role="img" aria-label="Average scored runs per model and harness group"></div>
+      <script id="{{ chart_prefix }}-chart-scores-data" type="application/json">{{ charts.scores | tojson }}</script>
+      {% if not charts.scores.groups %}
+      <p class="cc-empty">No completed evaluation evidence in this context yet.</p>
+      {% endif %}
+      <details class="cc-fallback">
+        <summary>Underlying values (table)</summary>
+        <div class="table-wrap"><table class="mini-table">
+          <caption class="visually-hidden">Score aggregates per model and harness</caption>
+          <thead><tr><th scope="col">Group</th><th scope="col">Scored (n)</th><th scope="col">Unscored/UNKNOWN (n)</th><th scope="col">Avg scored</th><th scope="col">Range</th></tr></thead>
+          <tbody>
+            {% for g in charts.scores.groups %}
+            <tr>
+              <td class="mono">{{ g.label }}</td><td>{{ g.n_scored }}</td><td>{{ g.n_unscored_unknown }}</td>
+              <td>{% if g.avg_scored is not none %}{{ "%.2f"|format(g.avg_scored) }}{% else %}n/a{% endif %}</td>
+              <td>{% if g.min_scored is not none %}{{ "%.2f"|format(g.min_scored) }}–{{ "%.2f"|format(g.max_scored) }}{% else %}n/a{% endif %}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table></div>
+      </details>
+      <p class="cc-links"><a href="/operator/compare">Open model + harness comparison</a></p>
+    </div>
+  </div>
+</section>

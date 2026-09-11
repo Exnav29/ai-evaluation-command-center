@@ -5,6 +5,9 @@
 <p class="lede">Deterministic computed qualification per exact harness + model + capability + test version, derived from completed evaluation evidence. No LLM is involved: the same evidence always yields the same state. Operator-recorded decision history remains on the <a href="/operator/qualifications">Qualification board</a>.</p>
 <p class="note">Rules: UNKNOWN is never a pass. Infrastructure failures are distinguished from model/task failures and never cause Not Qualified on their own. Excluded runs stay inspectable but do not count. Demo runs are labeled and excluded from real qualification.</p>
 
+{% set chart_prefix = "qualpage" %}
+{% include "charts_section.html" %}
+
 {% if triples %}
 <div class="table-wrap">
 <table>

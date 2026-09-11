@@ -265,6 +265,9 @@ def create_app(engine=None) -> FastAPI:
     def operator_overview(request: Request, session: Session = Depends(get_session)):
         rows = queries.fetch_runs_overview(session, limit=100)
         summary = queries.fetch_summary(session)
+        from aecc import chart_queries as charts
+
+        chart_payload = charts.fetch_overview_charts(session)
         # demo banner
         from aecc.demo import has_demo_data
         has_demo = has_demo_data(session)
@@ -275,7 +278,7 @@ def create_app(engine=None) -> FastAPI:
         return templates.TemplateResponse(
             request,
             "overview.html",
-            {"rows": rows, "summary": summary, "active": "overview", "has_demo": has_demo, "demo_counts": demo_counts},
+            {"rows": rows, "summary": summary, "active": "overview", "has_demo": has_demo, "demo_counts": demo_counts, "charts": chart_payload},
         )
 
     @app.get("/operator/runs/new", response_class=HTMLResponse)
@@ -464,10 +467,13 @@ def create_app(engine=None) -> FastAPI:
         qualification and no LLM is involved.
         """
         triples = queries.fetch_computed_qualifications(session)
+        from aecc import chart_queries as charts
+
+        chart_payload = charts.fetch_overview_charts(session)
         return templates.TemplateResponse(
             request,
             "qualification.html",
-            {"triples": triples, "active": "qualification"},
+            {"triples": triples, "active": "qualification", "charts": chart_payload},
         )
 
     @app.get("/operator/compare", response_class=HTMLResponse)
@@ -541,6 +547,13 @@ def create_app(engine=None) -> FastAPI:
             )
 
         assessments.sort(key=_sort_key)
+        from aecc import chart_queries as charts
+
+        chart_payload = charts.fetch_context_charts(
+            session,
+            capability_id=capability_id,
+            test_version_id=test_version_id,
+        )
         return templates.TemplateResponse(
             request,
             "compare.html",
@@ -551,6 +564,7 @@ def create_app(engine=None) -> FastAPI:
                 "selected_capability_id": capability_id,
                 "selected_test_version_id": test_version_id,
                 "active": "compare",
+                "charts": chart_payload,
             },
         )
 
