@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Version v{{ version.version_number }} · {{ logical_test.name }} · AECC{% endblock %}
+{% block content %}
+<h1>Version v{{ version.version_number }} · {{ logical_test.name }}</h1>
+<p><a href="/operator/tests/{{ logical_test.id }}">← Back to {{ logical_test.key }}</a> · <a href="/operator/tests">Test Registry</a></p>
+
+<section aria-labelledby="version-heading">
+  <h2 id="version-heading">Registered version {% if is_latest %}<span class="badge badge-pass">current · latest</span>{% else %}<span class="badge badge-unknown">historical</span>{% endif %}</h2>
+  <p class="note">Immutability: this version is frozen and cannot be edited. Corrections create a new version that supersedes this one.</p>
+  <dl class="facts">
+    <dt>Logical test</dt><dd class="mono">{{ logical_test.key }} — {{ logical_test.name }}</dd>
+    <dt>Version</dt><dd class="mono">v{{ version.version_number }} {% if is_latest %}<span class="badge badge-pass">current</span>{% endif %}</dd>
+    <dt>Capability</dt><dd class="mono">{{ version.capability_key }}{% if version.capability_version %} {{ version.capability_version }}{% else %} <span class="muted">(no version – legacy)</span>{% endif %} {% if capability %}<span class="muted">({% if not capability.is_active %}inactive, {% endif %}{{ capability.version }})</span>{% if not capability.is_active %} <span class="badge badge-excluded">inactive capability</span>{% endif %}{% endif %}</dd>
+    <dt>Task / prompt</dt><dd>{{ version.task_prompt }}</dd>
+    <dt>Acceptance criteria</dt><dd>{{ version.acceptance_criteria }}</dd>
+    <dt>Rubric</dt><dd class="mono">{{ version.rubric_id }} / {{ version.rubric_version }}</dd>
+    <dt>Permission profile</dt><dd class="mono">{{ version.permission_profile }}</dd>
+    <dt>Timeout</dt><dd>{% if version.timeout_seconds is not none %}{{ version.timeout_seconds }}s{% else %}—{% endif %}</dd>
+    <dt>Retry policy</dt><dd class="mono">{{ version.retry_policy or "—" }}</dd>
+    <dt>Expected artifacts</dt><dd class="mono">{{ version.expected_artifacts or "—" }}</dd>
+    <dt>Source fixture ref</dt><dd class="mono">{{ version.source_fixture_ref or "—" }}</dd>
+    <dt>Source commit</dt><dd class="mono">{{ version.source_commit or "—" }}</dd>
+    <dt>Harness policy</dt><dd class="mono">{{ version.harness_policy or "—" }}</dd>
+    <dt>Model policy</dt><dd class="mono">{{ version.model_policy or "—" }}</dd>
+    <dt>Definition hash</dt><dd class="mono break">{{ version.definition_hash }}</dd>
+    <dt>Registered</dt><dd>{{ format_dt(version.registered_at) }} · created {{ format_dt(version.created_at) }}</dd>
+    <dt>Supersedes</dt><dd>{% if superseded %}<a href="/operator/tests/versions/{{ superseded.id }}">v{{ superseded.version_number }} (id {{ superseded.id }})</a> · hash {{ superseded.definition_hash[:12] }}…{% else %}— (first version){% endif %}</dd>
+    <dt>Superseded by</dt><dd>{% if successor %}<a href="/operator/tests/versions/{{ successor.id }}">v{{ successor.version_number }} (id {{ successor.id }})</a>{% else %}— {% if is_latest %}latest, not yet superseded{% else %}—{% endif %}{% endif %}</dd>
+  </dl>
+</section>
+
+<section>
+  <h2>History</h2>
+  <p class="muted">This version's definition hash is derived from the frozen evaluation inputs (task, acceptance criteria, rubric, capability key+version, timeout, retry policy, artifacts, permission, source). Identical inputs produce identical hashes; corrections produce a new hash and a new version.</p>
+  <p><a href="/operator/tests/{{ logical_test.id }}" class="btn">Back to test history</a> <a href="/operator/tests/{{ logical_test.id }}/versions/new" class="btn">Register correction</a></p>
+</section>
+{% endblock %}

@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}Register new version · {{ logical_test.name }} · AECC{% endblock %}
+{% block content %}
+<h1>Register new version · {{ logical_test.name }}</h1>
+<p><a href="/operator/tests/{{ logical_test.id }}">← Back to {{ logical_test.key }}</a></p>
+<p class="lede">Create an immutable registered version. Once registered, a version cannot be edited — corrections require a new version. Inactive capabilities are hidden from selection but historical versions remain visible.</p>
+{% if latest %}
+<p class="note">Previous latest: <span class="badge badge-pass">v{{ latest.version_number }}</span> · {{ latest.capability_key }}{% if latest.capability_version %} {{ latest.capability_version }}{% endif %} · hash {{ latest.definition_hash[:12] }}… — new version will supersede v{{ latest.version_number }}.</p>
+{% endif %}
+<form method="post" action="/operator/tests/{{ logical_test.id }}/versions" class="form">
+  <div class="form-group">
+    <label for="capability_id">Capability (only active offered – exact key/version)</label>
+    <select id="capability_id" name="capability_id" required class="input">
+      <option value="">— Select capability —</option>
+      {% for c in active_capabilities %}
+      <option value="{{ c.id }}" {% if form.capability_id and form.capability_id|string == c.id|string %}selected{% endif %}>{{ c.capability_key }} {{ c.version }}{% if c.display_name %} — {{ c.display_name }}{% endif %}</option>
+      {% endfor %}
+    </select>
+    {% if errors.capability_id %}<p class="error">{{ errors.capability_id }}</p>{% endif %}
+    {% if errors.capability_key %}<p class="error">{{ errors.capability_key }}</p>{% endif %}
+    {% if not active_capabilities %}<p class="error">No active capabilities available. Create one in the Capability Catalog first.</p>{% endif %}
+  </div>
+  <div class="form-group">
+    <label for="description">Version description / change notes (optional, stored on logical test if empty)</label>
+    <textarea id="description" name="description" rows="2" class="input">{{ form.description or '' }}</textarea>
+  </div>
+  <div class="form-group">
+    <label for="task_prompt">Task / prompt</label>
+    <textarea id="task_prompt" name="task_prompt" required rows="4" class="input" placeholder="Describe the task the model must perform">{{ form.task_prompt or '' }}</textarea>
+    {% if errors.task_prompt %}<p class="error">{{ errors.task_prompt }}</p>{% endif %}
+  </div>
+  <div class="form-group">
+    <label for="acceptance_criteria">Acceptance criteria</label>
+    <textarea id="acceptance_criteria" name="acceptance_criteria" required rows="4" class="input" placeholder="How to judge success">{{ form.acceptance_criteria or '' }}</textarea>
+    {% if errors.acceptance_criteria %}<p class="error">{{ errors.acceptance_criteria }}</p>{% endif %}
+  </div>
+  <div class="form-group">
+    <label for="rubric_id">Rubric ID</label>
+    <input type="text" id="rubric_id" name="rubric_id" required value="{{ form.rubric_id or '' }}" class="input" placeholder="rubric-dashboard" />
+    {% if errors.rubric_id %}<p class="error">{{ errors.rubric_id }}</p>{% endif %}
+  </div>
+  <div class="form-group">
+    <label for="rubric_version">Rubric version</label>
+    <input type="text" id="rubric_version" name="rubric_version" required value="{{ form.rubric_version or '' }}" class="input" placeholder="1.0" />
+    {% if errors.rubric_version %}<p class="error">{{ errors.rubric_version }}</p>{% endif %}
+  </div>
+  <div class="form-group">
+    <label for="permission_profile">Permission profile</label>
+    <input type="text" id="permission_profile" name="permission_profile" required value="{{ form.permission_profile or '' }}" class="input" placeholder="WORKSPACE_WRITE_AND_SHELL_CONTAINED" />
+    {% if errors.permission_profile %}<p class="error">{{ errors.permission_profile }}</p>{% endif %}
+  </div>
+  <div class="form-group">
+    <label for="timeout_seconds">Timeout (seconds, optional)</label>
+    <input type="text" id="timeout_seconds" name="timeout_seconds" value="{{ form.timeout_seconds or '' }}" class="input" placeholder="300" />
+    {% if errors.timeout_seconds %}<p class="error">{{ errors.timeout_seconds }}</p>{% endif %}
+  </div>
+  <div class="form-group">
+    <label for="retry_policy">Retry policy (JSON, optional)</label>
+    <textarea id="retry_policy" name="retry_policy" rows="2" class="input" placeholder='{"max_attempts": 2}'>{{ form.retry_policy or '' }}</textarea>
+    {% if errors.retry_policy %}<p class="error">{{ errors.retry_policy }}</p>{% endif %}
+  </div>
+  <div class="form-group">
+    <label for="expected_artifacts">Expected artifacts (JSON, optional)</label>
+    <textarea id="expected_artifacts" name="expected_artifacts" rows="2" class="input" placeholder='["out.txt"]'>{{ form.expected_artifacts or '' }}</textarea>
+    {% if errors.expected_artifacts %}<p class="error">{{ errors.expected_artifacts }}</p>{% endif %}
+  </div>
+  <div class="form-group">
+    <label for="source_fixture_ref">Source / fixture reference (optional)</label>
+    <input type="text" id="source_fixture_ref" name="source_fixture_ref" value="{{ form.source_fixture_ref or '' }}" class="input" placeholder="fixture-dashboard" />
+  </div>
+  <div class="form-group">
+    <label for="source_commit">Source commit (optional)</label>
+    <input type="text" id="source_commit" name="source_commit" value="{{ form.source_commit or '' }}" class="input" placeholder="abc123def" />
+  </div>
+  <div class="form-group">
+    <label for="harness_policy">Harness policy (optional)</label>
+    <textarea id="harness_policy" name="harness_policy" rows="2" class="input" placeholder="harness constraints">{{ form.harness_policy or '' }}</textarea>
+  </div>
+  <div class="form-group">
+    <label for="model_policy">Model policy (optional)</label>
+    <textarea id="model_policy" name="model_policy" rows="2" class="input" placeholder="model constraints">{{ form.model_policy or '' }}</textarea>
+  </div>
+  <div class="form-actions">
+    <button type="submit" class="btn primary">Register version</button>
+    <a href="/operator/tests/{{ logical_test.id }}" class="btn">Cancel</a>
+  </div>
+</form>
+{% endblock %}
