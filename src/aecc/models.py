@@ -225,6 +225,7 @@ class TestVersion(Base):
     version_number: Mapped[int] = mapped_column(Integer, nullable=False)
     task_prompt: Mapped[str] = mapped_column(Text, nullable=False)
     capability_key: Mapped[str] = mapped_column(String(255), nullable=False)
+    capability_version: Mapped[str | None] = mapped_column(String(64), nullable=True)
     acceptance_criteria: Mapped[str] = mapped_column(Text, nullable=False)
     rubric_id: Mapped[str] = mapped_column(String(255), nullable=False)
     rubric_version: Mapped[str] = mapped_column(String(64), nullable=False)

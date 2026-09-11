@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Test Registry · AECC Operator{% endblock %}
+{% block content %}
+<h1>Test Registry</h1>
+<p class="lede">Reusable evaluation definitions. Each logical test preserves an append-only history of immutable registered versions — corrections add a new version, the previous remains visible. The latest version is marked <span class="badge badge-pass">current</span>.</p>
+<p><a href="/operator/tests/new" class="btn">+ New logical test</a></p>
+{% if tests %}
+<div class="table-wrap">
+<table>
+  <caption class="visually-hidden">Logical tests ordered by key, with version history</caption>
+  <thead>
+    <tr>
+      <th scope="col">Key</th>
+      <th scope="col">Name</th>
+      <th scope="col">Description</th>
+      <th scope="col">Versions</th>
+      <th scope="col">Latest</th>
+      <th scope="col">Capability (latest)</th>
+      <th scope="col">Definition hash (latest)</th>
+      <th scope="col">Detail</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for t in tests %}
+    {% set vs = versions_by_test.get(t.id, []) %}
+    {% set latest = latest_by_test.get(t.id) %}
+    <tr data-test-id="{{ t.id }}" data-test-key="{{ t.key }}">
+      <td class="mono break">{{ t.key }}</td>
+      <td>{{ t.name }}</td>
+      <td class="muted">{{ t.description or "—" }}</td>
+      <td>
+        {% if vs %}
+          <span class="badge badge-neutral">{{ vs|length }} version{% if vs|length != 1 %}s{% endif %}</span>
+          <span class="muted mono">v{{ vs[0].version_number }}…v{{ vs[-1].version_number }}</span>
+        {% else %}
+          <span class="badge badge-unknown">no versions</span>
+        {% endif %}
+      </td>
+      <td>
+        {% if latest %}
+          <span class="badge badge-pass">current · v{{ latest.version_number }}</span>
+          <span class="muted mono">{{ latest.rubric_id }}/{{ latest.rubric_version }}</span>
+        {% else %}
+          <span class="muted">—</span>
+        {% endif %}
+      </td>
+      <td class="mono">{{ latest.capability_key if latest else "—" }}{% if latest and latest.capability_version %} {{ latest.capability_version }}{% endif %}</td>
+      <td class="mono break" style="max-width: 160px; font-size: 0.75em;">{{ latest.definition_hash[:12] if latest else "—" }}…</td>
+      <td><a href="/operator/tests/{{ t.id }}">Inspect</a></td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+{% else %}
+<p>No logical tests registered yet. <a href="/operator/tests/new">Create the first logical test</a>.</p>
+{% endif %}
+{% endblock %}

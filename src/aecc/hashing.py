@@ -24,6 +24,7 @@ HASH_FIELDS = (
     "timeout_seconds",
     "expected_artifacts",
     "capability_key",
+    "capability_version",
 )
 
 
@@ -52,6 +53,7 @@ def build_definition_payload(
     timeout_seconds: int | None = None,
     expected_artifacts: Any = None,
     capability_key: str | None = None,
+    capability_version: str | None = None,
 ) -> dict:
     """Build the canonical payload dict covered by the definition hash."""
     raw = {
@@ -66,6 +68,7 @@ def build_definition_payload(
         "timeout_seconds": timeout_seconds,
         "expected_artifacts": expected_artifacts,
         "capability_key": capability_key,
+        "capability_version": capability_version,
     }
     return {k: _normalize(v) for k, v in raw.items()}
 

@@ -18,6 +18,13 @@ foundation. Routes:
 - GET /operator/models/{id} — model detail
 - GET /operator/models/{id}/edit — edit model form
 - POST /operator/models/{id}/edit — update model
+- GET /operator/tests — test registry list
+- GET /operator/tests/new — new logical test form
+- POST /operator/tests — create logical test
+- GET /operator/tests/{id} — logical test detail with versions
+- GET /operator/tests/{id}/versions/new — register new version form
+- POST /operator/tests/{id}/versions — register new version
+- GET /operator/tests/versions/{version_id} — version detail
 
 The app queries persisted evidence per request; no hard-coded rows.
 ``create_app(engine=...)`` accepts an explicit engine so tests can bind an
@@ -28,6 +35,7 @@ runs pending Alembic migrations.
 
 from __future__ import annotations
 
+import json
 import os
 import re
 import urllib.parse
@@ -44,9 +52,10 @@ from sqlalchemy.orm import Session
 
 from aecc import dashboard_queries as queries
 from aecc import dashboard_viewmodels as vm
-from aecc.models import Capability, Model
+from aecc.models import Capability, LogicalTest, Model, TestVersion
 
 CAPABILITY_KEY_RE = re.compile(r"^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)*$")
+LOGICAL_KEY_RE = re.compile(r"^[a-z][a-z0-9_\-\.]*$")
 PRICING_TIERS = {"free", "paid", "unknown"}
 
 HERE = Path(__file__).resolve().parent
@@ -58,8 +67,6 @@ def _default_db_path() -> Path:
     override = os.environ.get("AECC_DB_PATH")
     if override:
         return Path(override)
-    # Repository root is two levels above src/aecc (src/.. = repo when installed
-    # as a package; fall back to cwd otherwise).
     root = HERE.parents[2] if len(HERE.parents) >= 3 else Path.cwd()
     candidate = root / "data" / "evaluations.sqlite"
     if candidate.parent.exists() or root.name != "/":
@@ -97,7 +104,6 @@ def _parse_form_body(body: bytes) -> dict:
         return {}
     decoded = body.decode("utf-8", errors="ignore")
     parsed = urllib.parse.parse_qs(decoded, keep_blank_values=True)
-    # flatten single values, keep list for multi?
     return {k: v[0] if len(v) == 1 else v for k, v in parsed.items()}
 
 
@@ -140,6 +146,23 @@ def _validate_capability_key(key: str) -> str | None:
     return None
 
 
+def _validate_logical_test_fields(data: dict) -> dict[str, str]:
+    errors: dict[str, str] = {}
+    key = (data.get("key") or "").strip()
+    name = (data.get("name") or "").strip()
+    if not key:
+        errors["key"] = "Logical test key is required."
+    elif len(key) > 255:
+        errors["key"] = "Key too long (max 255)."
+    elif not LOGICAL_KEY_RE.match(key):
+        errors["key"] = "Key must be lowercase alphanumeric, dot, dash or underscore, starting with a letter."
+    if not name:
+        errors["name"] = "Name is required."
+    elif len(name) > 500:
+        errors["name"] = "Name too long (max 500)."
+    return errors
+
+
 def _validate_model_fields(data: dict) -> dict[str, str]:
     errors: dict[str, str] = {}
     if not data.get("model_key", "").strip():
@@ -160,6 +183,49 @@ def _validate_model_fields(data: dict) -> dict[str, str]:
                     errors[field] = "Price must be non-negative."
             except ValueError:
                 errors[field] = "Price must be numeric."
+    return errors
+
+
+def _validate_version_fields(data: dict, active_cap_ids: set[str]) -> dict[str, str]:
+    errors: dict[str, str] = {}
+    cap_val = (data.get("capability_id") or data.get("capability_key") or "").strip()
+    if not cap_val:
+        errors["capability_id"] = "Capability is required."
+    elif cap_val not in active_cap_ids:
+        errors["capability_id"] = "Selected capability is not active or not found."
+    if not (data.get("task_prompt") or "").strip():
+        errors["task_prompt"] = "Task prompt is required."
+    if not (data.get("acceptance_criteria") or "").strip():
+        errors["acceptance_criteria"] = "Acceptance criteria is required."
+    if not (data.get("rubric_id") or "").strip():
+        errors["rubric_id"] = "Rubric ID is required."
+    if not (data.get("rubric_version") or "").strip():
+        errors["rubric_version"] = "Rubric version is required."
+    if not (data.get("permission_profile") or "").strip():
+        errors["permission_profile"] = "Permission profile is required."
+    timeout_raw = (data.get("timeout_seconds") or "").strip()
+    if timeout_raw:
+        try:
+            iv = int(timeout_raw)
+            if iv < 0:
+                errors["timeout_seconds"] = "Timeout must be non-negative."
+            if iv > 86400 * 7:
+                errors["timeout_seconds"] = "Timeout too large."
+        except ValueError:
+            errors["timeout_seconds"] = "Timeout must be an integer (seconds)."
+    # retry_policy JSON
+    retry_raw = (data.get("retry_policy") or "").strip()
+    if retry_raw:
+        try:
+            json.loads(retry_raw)
+        except Exception:
+            errors["retry_policy"] = "Retry policy must be valid JSON."
+    expected_raw = (data.get("expected_artifacts") or "").strip()
+    if expected_raw:
+        try:
+            json.loads(expected_raw)
+        except Exception:
+            errors["expected_artifacts"] = "Expected artifacts must be valid JSON."
     return errors
 
 
@@ -229,7 +295,6 @@ def create_app(engine=None) -> FastAPI:
         caps = list(
             session.scalars(select(Capability).order_by(Capability.capability_key, Capability.version)).all()
         )
-        # build parent map for display
         parents = {}
         for c in caps:
             if c.parent_id:
@@ -260,9 +325,6 @@ def create_app(engine=None) -> FastAPI:
         definition = (form.get("definition") or "").strip() or None
         description = (form.get("description") or "").strip() or None
         is_active = form.get("is_active") == "on" or form.get("is_active") == "true" or form.get("is_active") == "1"
-        # default to active when not provided (checkbox unchecked means inactive)
-        # If form has no is_active field at all, treat as True for new? Actually checkbox unchecked won't send field -> inactive
-        # For UX, we treat missing as inactive if form submitted via our template with checkbox; else default active
         if "is_active" not in form:
             is_active = True
         parent_raw = (form.get("parent_id") or "").strip()
@@ -287,7 +349,6 @@ def create_app(engine=None) -> FastAPI:
                 {"mode": "new", "capability": None, "capabilities": caps, "errors": errors, "form": form, "active": "capabilities"},
                 status_code=400,
             )
-        # uniqueness check
         existing = session.scalar(
             select(Capability).where(Capability.capability_key == key, Capability.version == version)
         )
@@ -323,7 +384,6 @@ def create_app(engine=None) -> FastAPI:
         parent = session.get(Capability, cap.parent_id) if cap.parent_id else None
         children = _capability_children(session, cap.id)
         ancestors = _capability_ancestors(session, cap)
-        # qualification history for this capability
         from aecc.models import QualificationDecision
 
         quals = list(
@@ -384,7 +444,6 @@ def create_app(engine=None) -> FastAPI:
         display_name = (form.get("display_name") or "").strip() or None
         definition = (form.get("definition") or "").strip() or None
         description = (form.get("description") or "").strip() or None
-        # checkbox handling: if missing -> inactive
         is_active = form.get("is_active") == "on" or form.get("is_active") == "true" or form.get("is_active") == "1"
         if "is_active" not in form:
             is_active = False
@@ -398,8 +457,6 @@ def create_app(engine=None) -> FastAPI:
                 elif session.get(Capability, parent_id) is None:
                     errors["parent_id"] = "Parent capability not found."
                 else:
-                    # prevent cycle: ensure parent is not descendant
-                    # walk up from parent
                     cur_id = parent_id
                     seen = set()
                     while cur_id:
@@ -418,7 +475,6 @@ def create_app(engine=None) -> FastAPI:
             errors["capability_key"] = err
         if not version:
             errors["version"] = "Version is required."
-        # uniqueness if key/version changed
         if not errors and (key != cap.capability_key or version != cap.version):
             existing = session.scalar(
                 select(Capability).where(Capability.capability_key == key, Capability.version == version)
@@ -481,7 +537,6 @@ def create_app(engine=None) -> FastAPI:
         is_active = form.get("is_active") == "on" or form.get("is_active") == "true" or form.get("is_active") == "1"
         if "is_active" not in form:
             is_active = True
-        # model_key uniqueness
         if model_key and session.scalar(select(Model).where(Model.model_key == model_key)):
             errors["model_key"] = "Model key already exists."
         if errors:
@@ -574,7 +629,6 @@ def create_app(engine=None) -> FastAPI:
         form = _parse_form_body(body)
         errors = _validate_model_fields(form)
         model_key = (form.get("model_key") or "").strip()
-        # uniqueness if changed
         if model_key != m.model_key and session.scalar(select(Model).where(Model.model_key == model_key)):
             errors["model_key"] = "Model key already exists."
         if errors:
@@ -598,7 +652,6 @@ def create_app(engine=None) -> FastAPI:
         m.harness_config = (form.get("harness_config") or "").strip() or None
         m.config_params = m.harness_config
         m.description = (form.get("description") or "").strip() or None
-        # checkbox: missing means inactive
         if "is_active" in form:
             m.is_active = form.get("is_active") == "on" or form.get("is_active") == "true" or form.get("is_active") == "1"
         else:
@@ -616,6 +669,298 @@ def create_app(engine=None) -> FastAPI:
                 status_code=400,
             )
         return RedirectResponse(url=f"/operator/models/{m.id}", status_code=303)
+
+    # ---- Test Registry ----
+    @app.get("/operator/tests", response_class=HTMLResponse)
+    def tests_list(request: Request, session: Session = Depends(get_session)):
+        tests = list(session.scalars(select(LogicalTest).order_by(LogicalTest.key)).all())
+        # map logical_test_id -> versions
+        versions_by_test: dict[int, list[TestVersion]] = {}
+        if tests:
+            all_versions = list(session.scalars(select(TestVersion).order_by(TestVersion.logical_test_id, TestVersion.version_number)).all())
+            for v in all_versions:
+                versions_by_test.setdefault(v.logical_test_id, []).append(v)
+        # latest per test
+        latest_by_test: dict[int, TestVersion | None] = {}
+        for t in tests:
+            vs = versions_by_test.get(t.id, [])
+            latest_by_test[t.id] = max(vs, key=lambda x: x.version_number) if vs else None
+        return templates.TemplateResponse(
+            request,
+            "tests_list.html",
+            {"tests": tests, "versions_by_test": versions_by_test, "latest_by_test": latest_by_test, "active": "tests"},
+        )
+
+    @app.get("/operator/tests/new", response_class=HTMLResponse)
+    def test_new_form(request: Request):
+        return templates.TemplateResponse(
+            request,
+            "test_form.html",
+            {"errors": {}, "form": {}, "active": "tests"},
+        )
+
+    @app.post("/operator/tests", response_class=HTMLResponse)
+    async def test_create(request: Request, session: Session = Depends(get_session)):
+        body = await request.body()
+        form = _parse_form_body(body)
+        errors = _validate_logical_test_fields(form)
+        key = (form.get("key") or "").strip()
+        name = (form.get("name") or "").strip()
+        description = (form.get("description") or "").strip() or None
+        if key and session.scalar(select(LogicalTest).where(LogicalTest.key == key)):
+            errors["key"] = "Logical test key already exists."
+        if errors:
+            return templates.TemplateResponse(
+                request, "test_form.html", {"errors": errors, "form": form, "active": "tests"}, status_code=400
+            )
+        lt = LogicalTest(key=key, name=name, description=description, created_at=datetime.now(timezone.utc))
+        session.add(lt)
+        try:
+            session.commit()
+        except Exception as e:
+            session.rollback()
+            errors["key"] = str(e)
+            return templates.TemplateResponse(
+                request, "test_form.html", {"errors": errors, "form": form, "active": "tests"}, status_code=400
+            )
+        return RedirectResponse(url=f"/operator/tests/{lt.id}", status_code=303)
+
+    @app.get("/operator/tests/{test_id}", response_class=HTMLResponse)
+    def test_detail(test_id: int, request: Request, session: Session = Depends(get_session)):
+        lt = session.get(LogicalTest, test_id)
+        if lt is None:
+            raise HTTPException(status_code=404, detail="logical test not found")
+        versions = list(
+            session.scalars(
+                select(TestVersion).where(TestVersion.logical_test_id == test_id).order_by(TestVersion.version_number.asc())
+            ).all()
+        )
+        latest = max(versions, key=lambda x: x.version_number) if versions else None
+        # resolve exact capability objects for history display (preserve exact version)
+        cap_map: dict[tuple[str, str | None], Capability] = {}
+        # also simple key fallback for older rows without version
+        cap_map_key: dict[str, Capability] = {}
+        if versions:
+            # collect exact pairs
+            pairs = {(v.capability_key, v.capability_version) for v in versions if v.capability_version}
+            keys_only = {v.capability_key for v in versions if not v.capability_version}
+            caps_exact = []
+            if pairs:
+                # fetch exact matches
+                for k, ver in pairs:
+                    c = session.scalar(select(Capability).where(Capability.capability_key == k, Capability.version == ver))
+                    if c:
+                        cap_map[(k, ver)] = c
+                        # also fill key fallback
+                        if k not in cap_map_key or (c.is_active and not cap_map_key[k].is_active):
+                            cap_map_key[k] = c
+                    else:
+                        # no exact match (maybe deleted) – try any version for that key
+                        fallback = session.scalar(select(Capability).where(Capability.capability_key == k).order_by(Capability.is_active.desc(), Capability.version.desc()))
+                        if fallback:
+                            cap_map[(k, ver)] = fallback
+            if keys_only:
+                caps = list(session.scalars(select(Capability).where(Capability.capability_key.in_(sorted(keys_only)))).all())
+                for c in caps:
+                    existing = cap_map_key.get(c.capability_key)
+                    if existing is None or (c.is_active and not existing.is_active):
+                        cap_map_key[c.capability_key] = c
+        return templates.TemplateResponse(
+            request,
+            "test_detail.html",
+            {"logical_test": lt, "versions": versions, "latest": latest, "cap_map": cap_map, "cap_map_key": cap_map_key, "active": "tests"},
+        )
+
+    @app.get("/operator/tests/{test_id}/versions/new", response_class=HTMLResponse)
+    def version_new_form(test_id: int, request: Request, session: Session = Depends(get_session)):
+        lt = session.get(LogicalTest, test_id)
+        if lt is None:
+            raise HTTPException(status_code=404, detail="logical test not found")
+        # only active capabilities offered
+        active_caps = list(session.scalars(select(Capability).where(Capability.is_active == True).order_by(Capability.capability_key, Capability.version)).all())  # noqa: E712
+        versions = list(
+            session.scalars(select(TestVersion).where(TestVersion.logical_test_id == test_id).order_by(TestVersion.version_number.desc())).all()
+        )
+        latest = versions[0] if versions else None
+        return templates.TemplateResponse(
+            request,
+            "version_form.html",
+            {"logical_test": lt, "active_capabilities": active_caps, "latest": latest, "errors": {}, "form": {}, "active": "tests"},
+        )
+
+    @app.post("/operator/tests/{test_id}/versions", response_class=HTMLResponse)
+    async def version_create(test_id: int, request: Request, session: Session = Depends(get_session)):
+        lt = session.get(LogicalTest, test_id)
+        if lt is None:
+            raise HTTPException(status_code=404, detail="logical test not found")
+        body = await request.body()
+        form = _parse_form_body(body)
+        active_caps = list(session.scalars(select(Capability).where(Capability.is_active == True).order_by(Capability.capability_key, Capability.version)).all())  # noqa: E712
+        active_ids = {str(c.id) for c in active_caps}
+        # backward-compat: allow capability_key fallback only if id not supplied, but prefer id
+        errors = _validate_version_fields(form, active_ids)
+        # if form used legacy capability_key, map to id for error messaging
+        if errors and "capability_id" in errors and form.get("capability_key"):
+            # try to provide clearer error
+            pass
+        if errors:
+            versions = list(session.scalars(select(TestVersion).where(TestVersion.logical_test_id == test_id).order_by(TestVersion.version_number.desc())).all())
+            latest = versions[0] if versions else None
+            return templates.TemplateResponse(
+                request,
+                "version_form.html",
+                {"logical_test": lt, "active_capabilities": active_caps, "latest": latest, "errors": errors, "form": form, "active": "tests"},
+                status_code=400,
+            )
+        # gather fields – capability is selected as exact id/version pair
+        capability_id_raw = (form.get("capability_id") or "").strip()
+        capability_key = ""
+        capability_version = None
+        selected_cap = None
+        if capability_id_raw:
+            try:
+                selected_cap = session.get(Capability, int(capability_id_raw))
+            except ValueError:
+                selected_cap = None
+            if selected_cap and selected_cap.is_active:
+                capability_key = selected_cap.capability_key
+                capability_version = selected_cap.version
+            else:
+                # fallback: try treating raw as key for legacy path (should have been rejected)
+                capability_key = (form.get("capability_key") or capability_id_raw).strip()
+                # try to resolve version
+                if selected_cap:
+                    capability_version = selected_cap.version
+                else:
+                    # attempt to lookup active key
+                    fallback = session.scalar(select(Capability).where(Capability.capability_key == capability_key, Capability.is_active == True))  # noqa: E712
+                    if fallback:
+                        capability_version = fallback.version
+        else:
+            # legacy fallback
+            capability_key = (form.get("capability_key") or "").strip()
+            fallback = session.scalar(select(Capability).where(Capability.capability_key == capability_key, Capability.is_active == True))  # noqa: E712
+            if fallback:
+                capability_version = fallback.version
+
+        task_prompt = (form.get("task_prompt") or "").strip()
+        acceptance_criteria = (form.get("acceptance_criteria") or "").strip()
+        rubric_id = (form.get("rubric_id") or "").strip()
+        rubric_version = (form.get("rubric_version") or "").strip()
+        permission_profile = (form.get("permission_profile") or "").strip()
+        source_fixture_ref = (form.get("source_fixture_ref") or "").strip() or None
+        source_commit = (form.get("source_commit") or "").strip() or None
+        harness_policy = (form.get("harness_policy") or "").strip() or None
+        model_policy = (form.get("model_policy") or "").strip() or None
+        retry_raw = (form.get("retry_policy") or "").strip() or None
+        expected_raw = (form.get("expected_artifacts") or "").strip() or None
+        timeout_raw = (form.get("timeout_seconds") or "").strip()
+        timeout_seconds = int(timeout_raw) if timeout_raw else None
+        description = (form.get("description") or "").strip() or None
+        # if logical test has no description and version provides one, update logical description? keep separate
+        # parse retry/expected for hashing
+        retry_obj = None
+        if retry_raw:
+            try:
+                retry_obj = json.loads(retry_raw)
+            except Exception:
+                retry_obj = retry_raw
+        expected_obj = None
+        if expected_raw:
+            try:
+                expected_obj = json.loads(expected_raw)
+            except Exception:
+                expected_obj = expected_raw
+
+        # compute definition hash – includes exact capability version
+        from aecc.hashing import build_definition_payload, canonical_definition_hash
+
+        payload = build_definition_payload(
+            task_prompt=task_prompt,
+            acceptance_criteria=acceptance_criteria,
+            rubric_id=rubric_id,
+            rubric_version=rubric_version,
+            source_fixture_ref=source_fixture_ref,
+            source_commit=source_commit,
+            permission_profile=permission_profile,
+            retry_policy=retry_obj,
+            timeout_seconds=timeout_seconds,
+            expected_artifacts=expected_obj,
+            capability_key=capability_key,
+            capability_version=capability_version,
+        )
+        definition_hash = canonical_definition_hash(payload)
+
+        # determine next version number and supersedes
+        existing = list(session.scalars(select(TestVersion).where(TestVersion.logical_test_id == test_id).order_by(TestVersion.version_number.desc())).all())
+        next_number = (existing[0].version_number + 1) if existing else 1
+        supersedes_id = existing[0].id if existing else None
+
+        now = datetime.now(timezone.utc)
+        tv = TestVersion(
+            logical_test_id=test_id,
+            version_number=next_number,
+            task_prompt=task_prompt,
+            capability_key=capability_key,
+            capability_version=capability_version,
+            acceptance_criteria=acceptance_criteria,
+            rubric_id=rubric_id,
+            rubric_version=rubric_version,
+            retry_policy=retry_raw,
+            timeout_seconds=timeout_seconds,
+            expected_artifacts=expected_raw,
+            permission_profile=permission_profile,
+            source_fixture_ref=source_fixture_ref,
+            source_commit=source_commit,
+            harness_policy=harness_policy,
+            model_policy=model_policy,
+            created_at=now,
+            registered_at=now,
+            definition_hash=definition_hash,
+            supersedes_version_id=supersedes_id,
+        )
+        session.add(tv)
+        # also update logical_test description if provided and logical has none
+        if description and not lt.description:
+            lt.description = description
+        try:
+            session.commit()
+        except Exception as e:
+            session.rollback()
+            errors["capability_id"] = str(e)
+            versions = list(session.scalars(select(TestVersion).where(TestVersion.logical_test_id == test_id).order_by(TestVersion.version_number.desc())).all())
+            latest = versions[0] if versions else None
+            return templates.TemplateResponse(
+                request,
+                "version_form.html",
+                {"logical_test": lt, "active_capabilities": active_caps, "latest": latest, "errors": errors, "form": form, "active": "tests"},
+                status_code=400,
+            )
+        return RedirectResponse(url=f"/operator/tests/{test_id}", status_code=303)
+
+    @app.get("/operator/tests/versions/{version_id}", response_class=HTMLResponse)
+    def version_detail(version_id: int, request: Request, session: Session = Depends(get_session)):
+        tv = session.get(TestVersion, version_id)
+        if tv is None:
+            raise HTTPException(status_code=404, detail="test version not found")
+        lt = session.get(LogicalTest, tv.logical_test_id)
+        # try to find exact capability object for preserved key+version, fallback to key
+        cap = None
+        if tv.capability_version:
+            cap = session.scalar(select(Capability).where(Capability.capability_key == tv.capability_key, Capability.version == tv.capability_version))
+        if cap is None:
+            cap = session.scalar(select(Capability).where(Capability.capability_key == tv.capability_key).order_by(Capability.is_active.desc(), Capability.version.desc()))
+        superseded = session.get(TestVersion, tv.supersedes_version_id) if tv.supersedes_version_id else None
+        # find successor if any (who supersedes this)
+        successor = session.scalar(select(TestVersion).where(TestVersion.supersedes_version_id == tv.id))
+        # determine if latest
+        latest = session.scalar(select(TestVersion).where(TestVersion.logical_test_id == tv.logical_test_id).order_by(TestVersion.version_number.desc()))
+        is_latest = latest is not None and latest.id == tv.id
+        return templates.TemplateResponse(
+            request,
+            "version_detail.html",
+            {"version": tv, "logical_test": lt, "capability": cap, "superseded": superseded, "successor": successor, "is_latest": is_latest, "active": "tests"},
+        )
 
     @app.get("/healthz")
     def healthz():

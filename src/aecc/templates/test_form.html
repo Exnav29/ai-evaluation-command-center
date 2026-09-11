@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}New logical test · AECC{% endblock %}
+{% block content %}
+<h1>New logical test</h1>
+<p class="lede">Create a reusable evaluation definition. The logical test holds identity (key, name, description); immutable versions hold the evaluation details and are added separately.</p>
+<form method="post" action="/operator/tests" class="form">
+  <div class="form-group">
+    <label for="key">Logical test key (stable, unique)</label>
+    <input type="text" id="key" name="key" required value="{{ form.key or '' }}" class="input" placeholder="login-redirect-fix" />
+    {% if errors.key %}<p class="error">{{ errors.key }}</p>{% endif %}
+  </div>
+  <div class="form-group">
+    <label for="name">Name</label>
+    <input type="text" id="name" name="name" required value="{{ form.name or '' }}" class="input" placeholder="Login redirect fix" />
+    {% if errors.name %}<p class="error">{{ errors.name }}</p>{% endif %}
+  </div>
+  <div class="form-group">
+    <label for="description">Description</label>
+    <textarea id="description" name="description" rows="4" class="input" placeholder="What this evaluation tests">{{ form.description or '' }}</textarea>
+  </div>
+  <div class="form-actions">
+    <button type="submit" class="btn primary">Create logical test</button>
+    <a href="/operator/tests" class="btn">Cancel</a>
+  </div>
+</form>
+{% endblock %}

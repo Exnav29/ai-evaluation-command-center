@@ -58,7 +58,7 @@ The initial OpenCode environment has been established and multiple free models h
 
 ### Model selection principle
 
-There is no universal "best model." Model selection is **capability-specific** and **evidence-based**: a model is considered for a capability only when preserved runs, scores, failure classifications, and qualification decisions for that exact harness + model + capability support it. Past success elsewhere is not substituted for evidence.
+AECC does not presume a universal "best model." Model selection is **capability-specific** and **evidence-based**: a model is considered for a capability only when preserved runs, scores, failure classifications, and qualification decisions for that exact harness + model + capability support it. If the evidence demonstrates broad or universal dominance within a defined scope, AECC should report that result rather than suppress it. Past success elsewhere is not substituted for evidence.
 
 ## Reproducing evaluations
 

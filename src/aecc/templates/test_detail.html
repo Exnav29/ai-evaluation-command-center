@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}{{ logical_test.name }} · AECC{% endblock %}
+{% block content %}
+<h1>{{ logical_test.name }}</h1>
+<p><a href="/operator/tests">← Back to Test Registry</a></p>
+
+<section aria-labelledby="identity-heading">
+  <h2 id="identity-heading">Logical test identity</h2>
+  <dl class="facts">
+    <dt>Key</dt><dd class="mono">{{ logical_test.key }}</dd>
+    <dt>Name</dt><dd>{{ logical_test.name }}</dd>
+    <dt>Description</dt><dd>{{ logical_test.description or "—" }}</dd>
+    <dt>Created</dt><dd>{{ format_dt(logical_test.created_at) }}</dd>
+    <dt>Versions</dt><dd>{{ versions|length }} registered · {% if latest %}<span class="badge badge-pass">current · v{{ latest.version_number }}</span>{% else %}no versions yet{% endif %}</dd>
+  </dl>
+  <p><a href="/operator/tests/{{ logical_test.id }}/versions/new" class="btn">+ Register new version</a></p>
+</section>
+
+<section aria-labelledby="versions-heading">
+  <h2 id="versions-heading">Registered versions</h2>
+  {% if versions %}
+  <p class="note">Immutability: registered versions cannot be edited — corrections create a new version that supersedes the previous. History is preserved.</p>
+  <div class="table-wrap">
+  <table>
+    <caption class="visually-hidden">All registered versions in version order</caption>
+    <thead>
+      <tr>
+        <th scope="col">Version</th>
+        <th scope="col">Status</th>
+        <th scope="col">Capability</th>
+        <th scope="col">Task / prompt</th>
+        <th scope="col">Rubric</th>
+        <th scope="col">Permission</th>
+        <th scope="col">Timeout</th>
+        <th scope="col">Hash</th>
+        <th scope="col">Registered</th>
+        <th scope="col">Supersedes</th>
+        <th scope="col">Detail</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for v in versions %}
+      <tr data-version-id="{{ v.id }}" data-version-number="{{ v.version_number }}">
+        <td class="mono">v{{ v.version_number }}</td>
+        <td>
+          {% if latest and v.id == latest.id %}<span class="badge badge-pass">current</span>{% else %}<span class="badge badge-unknown">history</span>{% endif %}
+        </td>
+        <td class="mono">
+          {{ v.capability_key }}{% if v.capability_version %} {{ v.capability_version }}{% endif %}
+          {% if v.capability_version %}
+            {% set c = cap_map.get((v.capability_key, v.capability_version)) %}
+          {% else %}
+            {% set c = cap_map_key.get(v.capability_key) %}
+          {% endif %}
+          {% if c and not c.is_active %}<span class="badge badge-excluded">inactive</span>{% endif %}
+        </td>
+        <td style="max-width: 240px; overflow-wrap: anywhere;">{{ v.task_prompt[:80] }}{% if v.task_prompt|length > 80 %}…{% endif %}</td>
+        <td class="mono">{{ v.rubric_id }}/{{ v.rubric_version }}</td>
+        <td class="mono">{{ v.permission_profile }}</td>
+        <td>{% if v.timeout_seconds is not none %}{{ v.timeout_seconds }}s{% else %}—{% endif %}</td>
+        <td class="mono" style="font-size: 0.75em;">{{ v.definition_hash[:12] }}…</td>
+        <td>{{ format_dt(v.registered_at) }}</td>
+        <td>{% if v.supersedes_version_id %}<a href="/operator/tests/versions/{{ v.supersedes_version_id }}">v{{ v.supersedes_version_id }}</a>{% else %}—{% endif %}</td>
+        <td><a href="/operator/tests/versions/{{ v.id }}">Inspect version v{{ v.version_number }}</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% else %}
+  <p>No registered versions yet. <a href="/operator/tests/{{ logical_test.id }}/versions/new">Register the first version</a>.</p>
+  {% endif %}
+</section>
+{% endblock %}
