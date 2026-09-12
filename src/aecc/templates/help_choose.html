@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Help Me Choose · AECC{% endblock %}
+{% block content %}
+<h1>Help Me Choose</h1>
+<p class="lede">Tell us the work, and we&rsquo;ll point to what the saved results actually support — or say <strong>We don&rsquo;t know yet</strong> when there isn&rsquo;t enough proof.</p>
+<section aria-labelledby="choose-heading">
+  <h2 id="choose-heading">Start from the work</h2>
+  <div class="work-grid">
+    {% for area in summaries.areas %}
+    <article class="work-card" data-testid="choose-{{ area.slug }}">
+      <h3>{{ area.title }}</h3>
+      <p class="muted">{{ area.blurb }}</p>
+      {% if area.status == "unknown" %}
+      <p><span class="badge badge-unknown">We don&rsquo;t know yet</span></p>
+      <p class="muted">Not enough results to recommend anything here. <a href="/test-model">Test a model</a> first.</p>
+      {% else %}
+      <p class="work-stats">{{ area.pass_runs }} passing result{% if area.pass_runs != 1 %}s{% endif %} across {{ area.models_tested }} model{% if area.models_tested != 1 %}s{% endif %}</p>
+      <p><a href="/rankings#work-{{ area.slug }}">See what the results support</a></p>
+      {% endif %}
+    </article>
+    {% endfor %}
+  </div>
+</section>
+<section aria-labelledby="next-heading">
+  <h2 id="next-heading">What choosing looks at</h2>
+  <ul class="history">
+    <li><strong>Ready for Work</strong> — the model has passing results for this work (technical: Qualification).</li>
+    <li><strong>Good, but check its work</strong> — it passes but needed review (technical: Review required).</li>
+    <li><strong>Not a good choice for this work</strong> — results show failure (technical: Not qualified).</li>
+    <li><strong>How much help it needed</strong> — whether a person stepped in (technical: Intervention burden).</li>
+    <li><strong>Needed a stronger model</strong> — the work had to be escalated (technical: Escalation).</li>
+  </ul>
+  <p class="note">Guided recommendations are not automated in this phase. For the full evidence behind any suggestion, see <a href="/operator/compare">Compare</a>, <a href="/operator/qualification">Ready-for-Work details</a>, or <a href="/advanced">Advanced</a>.</p>
+</section>
+{% endblock %}

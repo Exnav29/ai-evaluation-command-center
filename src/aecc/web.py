@@ -1241,6 +1241,78 @@ def create_app(engine=None) -> FastAPI:
             {"version": tv, "logical_test": lt, "capability": cap, "superseded": superseded, "successor": successor, "is_latest": is_latest, "active": "tests"},
         )
 
+    # ---- V2 product shell (Phase 1: shell + Home only) ----
+    @app.get("/", response_class=HTMLResponse)
+    def v2_root(request: Request):
+        return RedirectResponse(url="/home", status_code=303)
+
+    @app.get("/home", response_class=HTMLResponse)
+    def v2_home(request: Request, session: Session = Depends(get_session)):
+        from aecc import work_areas
+        from aecc.demo import has_demo_data
+
+        summaries = work_areas.fetch_home_work_area_summaries(session)
+        return templates.TemplateResponse(
+            request,
+            "home.html",
+            {"summaries": summaries, "has_demo": has_demo_data(session), "active": "home"},
+        )
+
+    @app.get("/test-model", response_class=HTMLResponse)
+    def v2_test_model(request: Request):
+        return templates.TemplateResponse(request, "test_model.html", {"active": "test-model"})
+
+    @app.get("/rankings", response_class=HTMLResponse)
+    def v2_rankings(request: Request, session: Session = Depends(get_session)):
+        from aecc import work_areas
+
+        summaries = work_areas.fetch_home_work_area_summaries(session)
+        return templates.TemplateResponse(
+            request, "rankings.html", {"summaries": summaries, "active": "rankings"}
+        )
+
+    @app.get("/help-me-choose", response_class=HTMLResponse)
+    def v2_help_me_choose(request: Request, session: Session = Depends(get_session)):
+        from aecc import work_areas
+
+        summaries = work_areas.fetch_home_work_area_summaries(session)
+        return templates.TemplateResponse(
+            request, "help_choose.html", {"summaries": summaries, "active": "help-me-choose"}
+        )
+
+    @app.get("/models", response_class=HTMLResponse)
+    def v2_models(request: Request, session: Session = Depends(get_session)):
+        models = list(session.scalars(select(Model).order_by(Model.provider, Model.model_key)).all())
+        return templates.TemplateResponse(
+            request, "v2_models.html", {"models": models, "active": "models"}
+        )
+
+    @app.get("/test-library", response_class=HTMLResponse)
+    def v2_test_library(request: Request, session: Session = Depends(get_session)):
+        tests = list(session.scalars(select(LogicalTest).order_by(LogicalTest.key)).all())
+        versions_by_test: dict[int, list[TestVersion]] = {}
+        latest_by_test: dict[int, TestVersion | None] = {}
+        if tests:
+            all_versions = list(
+                session.scalars(
+                    select(TestVersion).order_by(TestVersion.logical_test_id, TestVersion.version_number)
+                ).all()
+            )
+            for v in all_versions:
+                versions_by_test.setdefault(v.logical_test_id, []).append(v)
+            for t in tests:
+                vs = versions_by_test.get(t.id, [])
+                latest_by_test[t.id] = max(vs, key=lambda x: x.version_number) if vs else None
+        return templates.TemplateResponse(
+            request,
+            "test_library.html",
+            {"tests": tests, "versions_by_test": versions_by_test, "latest_by_test": latest_by_test, "active": "test-library"},
+        )
+
+    @app.get("/advanced", response_class=HTMLResponse)
+    def v2_advanced(request: Request):
+        return templates.TemplateResponse(request, "advanced.html", {"active": "advanced"})
+
     @app.get("/healthz")
     def healthz():
         return {"status": "ok"}

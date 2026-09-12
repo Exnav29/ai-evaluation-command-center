@@ -296,6 +296,54 @@ a:focus-visible, button:focus-visible, summary:focus-visible { outline: 3px soli
   box-shadow: 0 4px 18px rgba(91,140,255,0.4);
 }
 .btn:hover, .btn:focus { text-decoration: underline; }
+.brand-link { color: inherit; text-decoration: none; }
+.topbar-sub {
+  border-top: 1px solid var(--cc-line-soft);
+  background: rgba(15,22,32,0.7);
+}
+.topbar-sub nav { max-width: 1280px; margin: 0 auto; padding: 0.3rem 1.25rem; }
+.nav-sub a { font-size: 0.78rem; font-weight: 600; padding: 0.25rem 0.5rem; }
+
+/* V2 Home + shell: strong hierarchy, generous whitespace, restrained feel */
+.hero {
+  background: linear-gradient(180deg, rgba(91,140,255,0.09), transparent 55%), var(--cc-panel);
+  border: 1px solid var(--cc-line);
+  border-radius: 16px;
+  padding: 2rem 1.75rem;
+  margin: 0.5rem 0 1.75rem;
+  box-shadow: 0 12px 34px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05);
+}
+.hero h1 { font-size: 1.75rem; max-width: 32ch; line-height: 1.25; }
+.eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: var(--cc-muted);
+  margin: 0 0 0.6rem;
+}
+.cta-row { display: flex; gap: 0.75rem; flex-wrap: wrap; margin: 1.25rem 0 0.5rem; }
+.work-section { margin: 1.5rem 0; }
+.work-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+.work-card {
+  background: var(--cc-panel);
+  border: 1px solid var(--cc-line);
+  border-radius: var(--cc-radius);
+  padding: 1.1rem 1.1rem 1rem;
+  box-shadow: 0 8px 26px rgba(0,0,0,0.35);
+  min-width: 0;
+}
+.work-card h3 { margin: 0 0 0.35rem; font-size: 1.02rem; }
+.work-card p { margin: 0.45rem 0; }
+.work-stats { font-weight: 700; font-variant-numeric: tabular-nums; }
+.how-section { margin: 2rem 0 1rem; }
+.steps { display: grid; gap: 0.6rem; margin: 0.8rem 0; padding-left: 1.4rem; }
+.steps li { max-width: 78ch; }
 
 @media (max-width: 1024px) {
   .cc-panel { grid-column: span 12; }
@@ -305,8 +353,11 @@ a:focus-visible, button:focus-visible, summary:focus-visible { outline: 3px soli
   .facts { grid-template-columns: 1fr; }
   table { min-width: 640px; font-size: 0.84rem; }
   h1 { font-size: 1.5rem; }
+  .hero { padding: 1.4rem 1.1rem; }
+  .hero h1 { font-size: 1.35rem; }
   .cc-chart { height: 260px; }
   .mini-table { min-width: 560px; }
+  .topbar-inner { gap: 0.75rem; }
 }
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; animation: none !important; }

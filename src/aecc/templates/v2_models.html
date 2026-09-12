@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Models · AECC{% endblock %}
+{% block content %}
+<h1>Models</h1>
+<p class="lede">Models are the AI systems you can test. Each entry keeps its provider and exact identifier so results always trace to what actually ran.</p>
+<p><a href="/operator/models/new" class="btn primary" data-testid="add-new-model">+ Add New Model</a></p>
+<p class="note">Adding works in two steps in the next phase: pick a <strong>Work Setup</strong> (technical: Harness), then a <strong>Provider</strong>, then a <strong>Model</strong> — with automatic setup discovery and an advanced <em>Add a model that isn&rsquo;t listed</em> path. This phase keeps the current form unchanged so that migration stays simple; no new discovery backend is introduced here.</p>
+{% if models %}
+<div class="table-wrap">
+<table>
+  <caption class="visually-hidden">Models available for testing</caption>
+  <thead>
+    <tr>
+      <th scope="col">Model</th>
+      <th scope="col">Provider</th>
+      <th scope="col">Exact identifier</th>
+      <th scope="col">Status</th>
+      <th scope="col">Detail</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for m in models %}
+    <tr data-model-id="{{ m.id }}" data-model-key="{{ m.model_key }}">
+      <td class="mono">{{ m.model_key }}</td>
+      <td class="mono">{{ m.provider }}</td>
+      <td class="mono break">{{ m.exact_identifier }}</td>
+      <td>{% if m.is_active %}<span class="badge badge-pass">active</span>{% else %}<span class="badge badge-excluded">inactive</span>{% endif %}</td>
+      <td><a href="/operator/models/{{ m.id }}">Inspect</a></td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+{% else %}
+<p>No models yet. <a href="/operator/models/new">Add the first model</a> to start testing.</p>
+{% endif %}
+<p class="note">Full registry fields (pricing, configuration, edit history) remain on the <a href="/operator/models">technical model registry</a>.</p>
+{% endblock %}

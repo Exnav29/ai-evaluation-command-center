@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Rankings · Who's Ready · AECC{% endblock %}
+{% block content %}
+<h1>Rankings <span class="muted">· Who&rsquo;s Ready</span></h1>
+<p class="lede">Who&rsquo;s ready for work, by type of work — only where saved test runs prove it. There is no combined score in this phase: each area stands on its own results, and missing results are shown as <strong>We don&rsquo;t know yet</strong>, never as zero.</p>
+<p class="note">Full side-by-side results live on the <a href="/operator/compare">technical comparison</a> and <a href="/operator/qualification">Ready-for-Work details</a> pages.</p>
+{% for area in summaries.areas %}
+<section aria-labelledby="work-{{ area.slug }}" id="work-{{ area.slug }}" class="work-section" data-testid="ranking-{{ area.slug }}">
+  <h2 id="work-{{ area.slug }}-heading">{{ area.title }}</h2>
+  <p class="muted">{{ area.blurb }}</p>
+  {% if area.status == "unknown" %}
+  <p><span class="badge badge-unknown">We don&rsquo;t know yet</span></p>
+  <p class="muted">
+    {% if area.total_runs == 0 %}
+    No test runs map to this work yet. <a href="/test-model">Test a model</a> to create the first results.
+    {% else %}
+    {{ area.total_runs }} test run{% if area.total_runs != 1 %}s{% endif %} map here but none show a passing result, so no model is named here. <a href="/operator/compare">Inspect the results</a>.
+    {% endif %}
+  </p>
+  {% else %}
+  <p class="work-stats">{{ area.pass_runs }} passing result{% if area.pass_runs != 1 %}s{% endif %} · {{ area.evaluated_runs }} test runs with results · {{ area.models_tested }} model{% if area.models_tested != 1 %}s{% endif %} tested · {{ area.models_with_pass }} with passing results</p>
+  <p><a href="/operator/compare">Compare the results</a> · <a href="/operator/qualification">Why we think this</a></p>
+  {% endif %}
+</section>
+{% endfor %}
+{% endblock %}

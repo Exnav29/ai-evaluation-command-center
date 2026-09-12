@@ -11,16 +11,29 @@
   <a class="skip-link" href="#main">Skip to main content</a>
   <header class="topbar">
     <div class="topbar-inner">
-      <span class="brand">AECC · Operator</span>
-      <nav aria-label="Operator navigation">
+      <span class="brand"><a href="/home" class="brand-link">AECC</a></span>
+      <nav aria-label="Primary">
         <ul class="nav-list">
-          <li><a href="/operator" {% if active == "overview" %}aria-current="page" class="active"{% endif %}>Overview</a></li>
-          <li><a href="/operator/compare" {% if active == "compare" %}aria-current="page" class="active"{% endif %}>Compare</a></li>
-          <li><a href="/operator/qualification" {% if active == "qualification" %}aria-current="page" class="active"{% endif %}>Qualification</a></li>
-          <li><a href="/operator/tests" {% if active == "tests" %}aria-current="page" class="active"{% endif %}>Tests</a></li>
-          <li><a href="/operator/capabilities" {% if active == "capabilities" %}aria-current="page" class="active"{% endif %}>Capabilities</a></li>
-          <li><a href="/operator/models" {% if active == "models" %}aria-current="page" class="active"{% endif %}>Models</a></li>
-          <li><a href="/operator/qualifications" {% if active == "qualifications" %}aria-current="page" class="active"{% endif %}>Qualifications</a></li>
+          <li><a href="/home" {% if active == "home" %}aria-current="page" class="active"{% endif %}>Home</a></li>
+          <li><a href="/test-model" {% if active == "test-model" %}aria-current="page" class="active"{% endif %}>Test a Model</a></li>
+          <li><a href="/rankings" {% if active == "rankings" %}aria-current="page" class="active"{% endif %}>Rankings</a></li>
+          <li><a href="/help-me-choose" {% if active == "help-me-choose" %}aria-current="page" class="active"{% endif %}>Help Me Choose</a></li>
+          <li><a href="/models" {% if active in ("models", "models-v2") %}aria-current="page" class="active"{% endif %}>Models</a></li>
+          <li><a href="/test-library" {% if active in ("test-library", "tests") %}aria-current="page" class="active"{% endif %}>Test Library</a></li>
+          <li><a href="/advanced" {% if active in ("advanced", "overview", "compare", "qualification", "qualifications", "capabilities", "runs") %}aria-current="page" class="active"{% endif %}>Advanced</a></li>
+        </ul>
+      </nav>
+    </div>
+    <div class="topbar-sub">
+      <nav aria-label="Technical evidence">
+        <ul class="nav-list nav-sub">
+          <li><a href="/operator">Overview</a></li>
+          <li><a href="/operator/compare">Compare</a></li>
+          <li><a href="/operator/qualification">Qualification</a></li>
+          <li><a href="/operator/tests">Tests</a></li>
+          <li><a href="/operator/capabilities">Capabilities</a></li>
+          <li><a href="/operator/models">Models</a></li>
+          <li><a href="/operator/qualifications">Qualifications</a></li>
         </ul>
       </nav>
     </div>

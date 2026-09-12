@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Test Library · AECC{% endblock %}
+{% block content %}
+<h1>Test Library</h1>
+<p class="lede">Tests are real tasks with clear acceptance checks. Each test keeps every version so results always trace to the exact task that ran.</p>
+<p><a href="/operator/tests/new" class="btn">+ New test</a> <a href="/operator/runs/new" class="btn primary">Test a Model</a></p>
+{% if tests %}
+<div class="table-wrap">
+<table>
+  <caption class="visually-hidden">Available tests</caption>
+  <thead>
+    <tr>
+      <th scope="col">Test</th>
+      <th scope="col">Key</th>
+      <th scope="col">Versions</th>
+      <th scope="col">Type of work (latest)</th>
+      <th scope="col">Detail</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for t in tests %}
+    {% set latest = latest_by_test.get(t.id) %}
+    <tr data-test-id="{{ t.id }}" data-test-key="{{ t.key }}">
+      <td>{{ t.name }}</td>
+      <td class="mono break">{{ t.key }}</td>
+      <td>{{ versions_by_test.get(t.id, [])|length }}</td>
+      <td class="mono">{{ latest.capability_key if latest else "—" }}</td>
+      <td><a href="/operator/tests/{{ t.id }}">Inspect</a></td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+{% else %}
+<p>No tests yet. <a href="/operator/tests/new">Create the first test</a>.</p>
+{% endif %}
+<p class="note">Full version history, hashes, and rubrics stay on the <a href="/operator/tests">technical test registry</a>.</p>
+{% endblock %}
