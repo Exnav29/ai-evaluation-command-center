@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Advanced · Technical Details · AECC{% endblock %}
+{% block content %}
+<h1>Advanced <span class="muted">· Technical Details</span></h1>
+<p class="lede">Exact technical language and full evidence live here. Nothing here changes how tests run or how results are judged.</p>
+<section aria-labelledby="evidence-heading">
+  <h2 id="evidence-heading">Evidence and detail pages</h2>
+  <ul class="history">
+    <li><a href="/operator">Operator Overview</a> — recent test runs with latest results.</li>
+    <li><a href="/operator/runs/new">Run a Test Run</a> — start an evaluation (technical: Run Evaluation).</li>
+    <li><a href="/operator/compare">Compare</a> — side-by-side results in one test context.</li>
+    <li><a href="/operator/qualification">Ready-for-Work details</a> — deterministic per-context assessment with reasons (technical: Qualification).</li>
+    <li><a href="/operator/qualifications">Qualification board</a> — recorded operator decisions and history.</li>
+    <li><a href="/operator/tests">Test registry</a> — logical tests and immutable versions (technical: Evaluation definitions).</li>
+    <li><a href="/operator/capabilities">Skill catalog</a> — versioned skills (technical: Capabilities).</li>
+    <li><a href="/operator/models">Model registry</a> — provider + exact identifiers (technical: Models).</li>
+  </ul>
+</section>
+<section aria-labelledby="words-heading">
+  <h2 id="words-heading">Plain words → technical terms</h2>
+  <div class="table-wrap">
+  <table class="mini-table">
+    <caption class="visually-hidden">Plain-language to technical term mapping</caption>
+    <thead><tr><th scope="col">Plain words</th><th scope="col">Technical term</th></tr></thead>
+    <tbody>
+      <tr><td>Ready for Work / Who&rsquo;s Ready</td><td class="mono">Qualification</td></tr>
+      <tr><td>Skill / Type of Work</td><td class="mono">Capability</td></tr>
+      <tr><td>Work Setup</td><td class="mono">Harness</td></tr>
+      <tr><td>Test Run</td><td class="mono">Evaluation</td></tr>
+      <tr><td>Results / Why we think this</td><td class="mono">Evidence</td></tr>
+      <tr><td>We don&rsquo;t know yet</td><td class="mono">Insufficient evidence</td></tr>
+      <tr><td>Good, but check its work</td><td class="mono">Review required</td></tr>
+      <tr><td>Not a good choice for this work</td><td class="mono">Not qualified</td></tr>
+      <tr><td>How much help it needed</td><td class="mono">Intervention burden</td></tr>
+      <tr><td>Needed a stronger model</td><td class="mono">Escalation</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p class="note">UNKNOWN means unknown — never a pass. Missing cost/tokens render as not recorded, never zero. Demo results are labeled and excluded from real qualification. Charts remain on the operator evidence pages.</p>
+</section>
+{% endblock %}

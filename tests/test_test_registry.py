@@ -466,9 +466,11 @@ def test_immutability_still_enforced(client):
 def test_navigation_and_latest_obvious(client):
     cap = _create_capability(client, "cap.nav", "v1")
     tid = _create_logical_test(client, key="nav-t", name="Nav")
-    html = client.get("/operator").text
-    assert 'href="/operator/tests"' in html
-    assert 'href="/operator/capabilities"' in html
+    assert client.get("/operator").status_code == 200
+    # Technical registry index lives on Advanced, not in a persistent global subnav.
+    adv = client.get("/advanced").text
+    assert 'href="/operator/tests"' in adv
+    assert 'href="/operator/capabilities"' in adv
     html2 = client.get("/operator/tests").text
     assert 'href="/operator/tests/new"' in html2
     # register versions and check latest obvious

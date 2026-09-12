@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Home · AECC{% endblock %}
+{% block content %}
+<section class="hero" aria-labelledby="home-heading">
+  <p class="eyebrow">AI model testing for real work</p>
+  <h1 id="home-heading">Test AI models on real work, see what each one is best at, and get help choosing the right model for a project.</h1>
+  <p class="lede">Results come from saved test runs — what the model actually did, how much help it needed, and why we think this. When there isn&rsquo;t enough proof yet, we say so: <strong>We don&rsquo;t know yet</strong>.</p>
+  <div class="cta-row">
+    <a href="/test-model" class="btn primary" data-testid="cta-test-model">Test a Model</a>
+    <a href="/help-me-choose" class="btn" data-testid="cta-help-choose">Help Me Choose</a>
+  </div>
+  {% if has_demo %}
+  <p class="note"><span class="badge badge-unknown">demo results</span> Demo results are labeled and kept separate from real results.</p>
+  {% endif %}
+</section>
+
+<section aria-labelledby="work-areas-heading" class="work-section">
+  <h2 id="work-areas-heading">What type of work do you want to test?</h2>
+  <p class="lede">Each area shows only what saved test runs prove. No winner is named without proof, and missing results are never shown as zero.</p>
+  <div class="work-grid">
+    {% for area in summaries.areas %}
+    <article class="work-card" data-testid="work-card-{{ area.slug }}" data-work-area="{{ area.slug }}">
+      <h3>{{ area.title }}</h3>
+      <p class="muted">{{ area.blurb }}</p>
+      {% if area.status == "unknown" %}
+      <p><span class="badge badge-unknown">We don&rsquo;t know yet</span></p>
+      <p class="muted">
+        {% if area.total_runs == 0 %}
+        No test runs map to this work yet.
+        {% else %}
+        {{ area.total_runs }} test run{% if area.total_runs != 1 %}s{% endif %} map here, but none show a passing result yet — so there&rsquo;s nothing to recommend.
+        {% endif %}
+        <a href="/rankings#work-{{ area.slug }}">Why we think this</a>
+      </p>
+      {% else %}
+      <p class="work-stats">{{ area.pass_runs }} passing result{% if area.pass_runs != 1 %}s{% endif %} · {{ area.evaluated_runs }} test runs with results · {{ area.models_tested }} model{% if area.models_tested != 1 %}s{% endif %} tested</p>
+      <p><a href="/rankings#work-{{ area.slug }}">See results · Why we think this</a></p>
+      {% endif %}
+    </article>
+    {% endfor %}
+  </div>
+  {% if summaries.overall.unmapped_runs > 0 %}
+  <p class="note">{{ summaries.overall.unmapped_runs }} saved test run{% if summaries.overall.unmapped_runs != 1 %}s{% endif %} use earlier technical skills that don&rsquo;t map to these five areas yet. <a href="/advanced">See Technical Details in Advanced</a>.</p>
+  {% endif %}
+</section>
+
+<section aria-labelledby="how-heading" class="how-section">
+  <h2 id="how-heading">How it works</h2>
+  <ol class="steps">
+    <li><strong>Add / Test</strong> — run a model on real work. <a href="/test-model">Test a Model</a></li>
+    <li><strong>Compare</strong> — see results side by side. <a href="/rankings">Rankings</a></li>
+    <li><strong>Choose</strong> — get help picking. <a href="/help-me-choose">Help Me Choose</a></li>
+    <li><strong>Understand why</strong> — every claim links to its results. <a href="/advanced">Why we think this</a></li>
+  </ol>
+  <p class="note">Plain words first; exact technical language stays available under <a href="/advanced">Advanced / Technical Details</a>. Test Run = Evaluation · Type of Work = Skill/Capability · Work Setup = Harness · Results = Evidence.</p>
+</section>
+{% endblock %}

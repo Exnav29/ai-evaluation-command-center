@@ -543,15 +543,17 @@ def test_model_routes_http(client):
 
 
 def test_navigation_contains_registry_links(client):
-    html = client.get("/operator").text
-    assert 'href="/operator/capabilities"' in html
-    assert 'href="/operator/models"' in html
-    html2 = client.get("/operator/capabilities").text
-    assert 'href="/operator/models"' in html2
-    html3 = client.get("/operator/models").text
-    assert 'href="/operator/capabilities"' in html3
+    # Technical registry index lives on Advanced, not in a persistent global subnav.
+    adv = client.get("/advanced").text
+    assert 'href="/operator/capabilities"' in adv
+    assert 'href="/operator/models"' in adv
     # still has overview/qualifications
-    assert 'href="/operator"' in html and 'href="/operator/qualifications"' in html
+    assert 'href="/operator"' in adv and 'href="/operator/qualifications"' in adv
+    # Contextual creation links remain on the registry pages themselves.
+    html2 = client.get("/operator/capabilities").text
+    assert 'href="/operator/capabilities/new"' in html2
+    html3 = client.get("/operator/models").text
+    assert 'href="/operator/models/new"' in html3
 
 
 def test_forms_are_accessible_and_responsive(client):

@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Test a Model · AECC{% endblock %}
+{% block content %}
+<h1>Test a Model</h1>
+<p class="lede">Run a model on real work and keep the results. A Test Run records what the model did, how much help it needed, and the exact setup used.</p>
+<div class="cta-row">
+  <a href="/operator/runs/new" class="btn primary" data-testid="start-test-run">Start a Test Run</a>
+  <a href="/test-library" class="btn">Browse the Test Library</a>
+</div>
+<section aria-labelledby="what-heading">
+  <h2 id="what-heading">What happens</h2>
+  <ol class="steps">
+    <li>Pick a test (a real task with clear acceptance checks).</li>
+    <li>Pick a model and its work setup.</li>
+    <li>We save every attempt, score, and event — including what needed review.</li>
+  </ol>
+  <p class="note">Technical wording: Test Run = Evaluation · Work Setup = Harness · Type of Work = Skill/Capability. Exact identifiers and full evidence stay on the <a href="/operator/runs/new">operator test-run form</a> and <a href="/advanced">Advanced</a> pages. No new test execution behavior is introduced in this phase.</p>
+</section>
+{% endblock %}
