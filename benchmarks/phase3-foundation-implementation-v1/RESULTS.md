@@ -9,18 +9,20 @@
 
 ## Decision
 
-Muse Spark 1.3 Contributor Free is selected as the implementation baseline for the database/evidence foundation. This is an implementation-selection decision, not a blanket qualification of the model for all work. Both models remain benchmark evidence.
+Muse Spark 1.3 Contributor Free is selected as the implementation baseline for the database/evidence foundation **for this benchmark decision**. This is an implementation-selection decision based on the two observed runs below, not a blanket qualification of the model for all work or a stable model-level ranking. Both models remain benchmark evidence.
 
 | Model | Rubric score | Band | Elapsed | First output | Independent verification | Cost |
 | --- | ---: | --- | ---: | ---: | --- | ---: |
 | `opencode/muse-spark-1.3-contributor-free` | **99/100** | EXCELLENT | 190.617 s | 3.150 s | 21 passed | $0.0000 |
 | `opencode/mimo-v2.5-free` | **90/100** | EXCELLENT | 245.134 s | 3.076 s | 38 passed | $0.0000 |
 
+These are **run scores**: attributed rubric judgments over these specific sealed artifacts. They should not be interpreted as measurements of permanent model ability or as evidence of a nine-point stable capability gap between the models.
+
 Approximate provider usage observed during the runs was ~1.418M total tokens for Muse and ~1.007M for MiMo. These totals include repeated/growing agent context and should not be interpreted as unique source tokens read.
 
 ## Muse findings
 
-Muse produced the stronger relational evidence model. In particular, qualification decisions use explicit relational evidence links to runs and/or attempts, capability identity supports `(capability_key, version)`, and historical evidence records have strong provenance. No hard-fail rubric finding was identified. The sealed workspace archive SHA-256 was:
+Muse produced the stronger relational evidence model in this observed run. In particular, qualification decisions use explicit relational evidence links to runs and/or attempts, capability identity supports `(capability_key, version)`, and historical evidence records have strong provenance. No hard-fail rubric finding was identified. The sealed workspace archive SHA-256 was:
 
 `d11ec053594afea05327ed021a900a63439b1828e426403e0c82b8dc892e29cb`
 
@@ -28,12 +30,21 @@ During execution Muse encountered tool-level failures/denials and recovered with
 
 ## MiMo findings
 
-MiMo produced a sound implementation with strong behavioral testing and autonomous debugging. Its qualification evidence representation was weaker because supporting run IDs were stored as text rather than enforced relational links, and its capability-key uniqueness made capability versioning less natural. Several historical records also allowed weaker provenance anchoring. No hard-fail rubric finding was identified. The sealed workspace archive SHA-256 was:
+MiMo produced a sound implementation with strong behavioral testing and autonomous debugging in this observed run. Its qualification evidence representation was weaker because supporting run IDs were stored as text rather than enforced relational links, and its capability-key uniqueness made capability versioning less natural. Several historical records also allowed weaker provenance anchoring. No hard-fail rubric finding was identified. The sealed workspace archive SHA-256 was:
 
 `69bc04f77767d268368b9bec3e5833d4897a81b85bb163da4eb54f29b901438f`
 
 MiMo initially had one failing test because the assertion expected SQLite to include a symbolic constraint name in the exception text. The database constraint itself worked. MiMo corrected the assertion, reran the suite, and independent verification passed.
 
-## Standing interpretation
+## Interpretation
 
-For `backend_database_engineering`, Muse is the leading standing candidate and MiMo is the secondary candidate. This benchmark alone does not establish permanent qualification. Qualification remains an evidence-based decision over accumulated runs for the exact harness + model + capability combination.
+For **these two benchmark runs**, Muse produced the stronger scored result and is therefore the current implementation baseline for the database/evidence foundation. MiMo also produced a passing implementation with different strengths and weaknesses.
+
+This benchmark alone does **not** establish a general ranking for `backend_database_engineering` and does not establish permanent qualification for either model. Broader capability qualification requires accumulated evidence across repeated runs for the exact harness + model + capability combination.
+
+Two uncertainty sources remain separate and should be measured separately:
+
+1. **Model/run variance** — whether repeated executions by the same setup produce similar outcomes.
+2. **Evaluator/rubric variance** — whether the same sealed artifact receives materially similar scores when re-scored, ideally blindly and by more than one evaluator.
+
+Until that evidence exists, the preserved rubric scores remain valid records of these evaluations, but the strength of any broader inference should remain limited.
