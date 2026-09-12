@@ -85,6 +85,16 @@ def test_v2_nav_present_on_home(client):
         assert f'href="{href}"' in html
 
 
+def test_no_global_technical_subnav_on_v2_pages(client):
+    # The old technical sub-navigation must not persist on every V2 page;
+    # technical pages stay reachable through Advanced and contextual links.
+    for path in ("/home", "/rankings", "/help-me-choose", "/models", "/test-library", "/advanced"):
+        html = client.get(path).text
+        assert client.get(path).status_code == 200
+        assert "topbar-sub" not in html
+        assert 'aria-label="Technical evidence"' not in html
+
+
 def test_root_redirects_to_home(client):
     resp = client.get("/")
     assert resp.status_code in (303, 307)

@@ -226,8 +226,12 @@ def test_navigation_and_semantic_html_present(client):
     assert "<h1>" in html
     assert "<table>" in html or "<table" in html
     assert "<th" in html
+    # Qualification board stays reachable contextually from the overview charts.
     assert 'href="/operator/qualifications"' in html
-    assert 'href="/operator"' in html
+    # The full technical index lives on Advanced, not in a persistent global subnav.
+    adv = client.get("/advanced").text
+    assert 'href="/operator"' in adv
+    assert 'href="/operator/qualifications"' in adv
     detail = client.get(f"/operator/runs/{_ids(client)['runs']['r1']}").text
     assert "<h1>" in detail and "<h2" in detail
     assert "Back to overview" in detail
