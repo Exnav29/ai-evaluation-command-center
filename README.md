@@ -10,6 +10,14 @@ The goal is to answer a more useful question:
 
 AECC is being built toward an evidence-based control system for an AI engineering workforce.
 
+> **AECC is not primarily an evaluation runner. It is a qualification system that turns evaluation evidence into earned authority for AI workers.**
+
+The intended progression is:
+
+**Evidence → Qualification → Decision / Routing**
+
+An execution harness can produce evidence. AECC's core responsibility is deciding what that evidence is strong enough to justify — including when the correct answer is still **UNKNOWN**.
+
 ## Why I started this
 
 I use AI models heavily in day-to-day development work.
@@ -120,6 +128,18 @@ Likewise, success at one skill does not automatically prove success at another. 
 
 AECC is designed to preserve those distinctions.
 
+This principle now has independent support in recent research. [Claw-SWE-Bench](https://arxiv.org/abs/2606.12344) found that harness choice can materially change coding-agent results even with the model held fixed. [Harness-Bench](https://arxiv.org/abs/2605.27922) similarly argues that capability should be reported at the model-harness configuration level rather than attributed to the base model alone.
+
+## Evaluation runners are evidence producers
+
+AECC currently has its own OpenCode execution adapter, but the execution layer is not the product's intended center of gravity.
+
+The architecture should allow multiple execution systems to act as **evidence producers** while AECC remains responsible for evidence integrity, qualification, and decision logic.
+
+That means an external runner is useful only if AECC can still preserve the guarantees it depends on, including exact setup identity, raw artifacts and traces, infra-failure separation, retry policy, intervention history, and provenance.
+
+Potential execution-layer integrations and competitors are tracked in **[docs/competitive-landscape.md](docs/competitive-landscape.md)**.
+
 ## What works today, what is in development, and what is planned
 
 | Area | Status | What that means today |
@@ -133,6 +153,7 @@ AECC is designed to preserve those distinctions.
 | Operator dashboard and charts | **Working on `main`** | The current server-rendered operator dashboard exposes evidence, comparison, qualification, registry, and reporting views. |
 | V2 plain-language operator experience | **In development** | The product is moving toward the `ADD / TEST → COMPARE → CHOOSE → UNDERSTAND WHY` workflow. Not all V2 journeys are available on `main` yet. |
 | Additional harness/provider discovery | **Planned / in development** | The architecture is intended to support more setups, but OpenCode is the implemented execution harness today. |
+| External evidence-producer adapters | **Research / planned** | AECC is evaluating whether existing execution systems can produce compatible evidence without weakening AECC's evidence semantics. |
 | Project recommendation and AI-team routing | **Planned** | Recommendations will require accumulated qualification evidence; thin evidence should remain UNKNOWN rather than being turned into routing confidence. |
 | Public/demo exploration dataset | **Planned** | The repository has a location reserved for demonstration data, but a complete ready-to-explore public demo dataset is not shipped yet. |
 
@@ -292,7 +313,7 @@ The intent is to preserve not just resulting code, but evidence about which AI m
 
 AECC has reached the point where there is real software and real evidence to inspect, but it is not a finished product.
 
-Current work includes improving the operator experience, expanding real-world test packs, model discovery through coding harnesses, richer comparisons, qualification progression, project-level recommendations, better cost/intervention analysis, additional harness/provider support, and stronger development/review automation.
+Current work includes improving the operator experience, expanding real-world test packs, model discovery through coding harnesses, richer comparisons, qualification progression, project-level recommendations, better cost/intervention analysis, additional harness/provider support, external evidence-producer research, and stronger development/review automation.
 
 ## I want people to challenge this
 
@@ -326,14 +347,15 @@ This repository contains the AECC application, including the evaluation engine, 
 
 It intentionally does **not** contain production credentials, private API keys, live private evaluation databases, unsanitized private model output, private operational artifacts, or VPS-specific secrets.
 
-## Methodology
+## Methodology and research
 
-Relevant methodology and architecture documents are maintained under `docs/`, with version-controlled prompts and evaluation definitions elsewhere in the repository.
+Relevant methodology, architecture, and competitive-research documents are maintained under `docs/`, with version-controlled prompts and evaluation definitions elsewhere in the repository.
 
 Important starting points include:
 
 - `docs/COMMAND_CENTER_V1_SPEC.md`
 - `docs/PLANNING_RUBRIC_V1.md`
+- `docs/competitive-landscape.md`
 - `benchmarks/phase3-foundation-implementation-v1/RESULTS.md`
 - `prompts/`
 
@@ -341,19 +363,19 @@ Important starting points include:
 
 The broad direction is:
 
-**Working Command Center → AI Workforce Intelligence → Recommendation / Routing → Public Research**
+**Evidence → Qualification → Decision / Routing → Public Research**
 
-### 1. Working Command Center
+### 1. Evidence
 
-Reliable evaluation infrastructure, model registry, test registry, execution, evidence preservation, attributed scoring, comparison, and qualification.
+Reliable test definitions, execution, artifacts, traces, cost/timing data, intervention history, and exact setup identity. AECC may produce this evidence itself or consume it from compatible execution systems.
 
-### 2. AI Workforce Intelligence
+### 2. Qualification
 
-Determine which exact setups are proven for which kinds of work, while measuring cost, intervention burden, escalation, reliability, and execution characteristics.
+Determine which exact setups have accumulated enough evidence to earn authority for particular kinds of work. UNKNOWN remains a first-class result, and intervention/escalation history remains part of the qualification record.
 
-### 3. Recommendation and Routing
+### 3. Decision / Routing
 
-Given a real project, recommend an AI team only where qualification evidence is sufficient. UNKNOWN must remain a valid answer.
+Given a real project, recommend an AI team or eligible model set only from setups that have already met the applicable qualification bar. Routing optimizes among **qualified candidates**; it must not manufacture qualification from request-time confidence alone.
 
 ### 4. Public Research
 
