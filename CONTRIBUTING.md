@@ -30,6 +30,23 @@ Useful contributions include:
 - suggesting better ways to measure cost, supervision, reliability, or escalation;
 - contributing analysis of where benchmark rankings differ from real-world performance.
 
+## Community and Discussions
+
+GitHub Discussions is the best place to explore an idea, ask a question, share an observation, challenge the methodology, or troubleshoot before the work is fully defined.
+
+Use **[AECC Discussions](https://github.com/Exnav29/ai-evaluation-command-center/discussions)** to:
+
+- share model results and observations;
+- propose test ideas or product ideas;
+- challenge methodology, scoring, benchmarks, or qualification policy;
+- ask questions and troubleshoot unexpected behavior;
+- share experiments, integrations, reproduced results, and other work;
+- participate in community polls and project conversations.
+
+Once a problem or implementation task is concrete enough to track, move it into a GitHub Issue. Confirmed implementation work should be associated with an Issue and, when appropriate, a pull request.
+
+If you are unsure whether something belongs in a Discussion or an Issue, start with a Discussion. Exploration belongs in Discussions; trackable work belongs in Issues.
+
 ## Start with an Issue
 
 Before making a substantial code or methodology change, please open an Issue first.
@@ -289,7 +306,7 @@ Backward compatibility will be considered carefully where evidence integrity or 
 
 ## Questions
 
-If you are unsure where to begin, open an Issue describing what interests you.
+If you are unsure where to begin, start in **[AECC Discussions](https://github.com/Exnav29/ai-evaluation-command-center/discussions)** or open an Issue once you have a concrete, trackable task.
 
 Good starting points include:
 
