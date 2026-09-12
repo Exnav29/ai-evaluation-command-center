@@ -335,6 +335,21 @@ Useful participation includes:
 
 If AECC produces a conclusion that the evidence does not support, I want that challenged.
 
+## Community and Discussions
+
+AECC has a public **[GitHub Discussions community](https://github.com/Exnav29/ai-evaluation-command-center/discussions)** for questions, ideas, methodology debate, model observations, troubleshooting, polls, and shared experiments.
+
+Use Discussions to:
+
+- share model results and observations;
+- propose tests or feature ideas;
+- challenge the methodology or benchmark design;
+- ask questions or troubleshoot;
+- share reproduced results, integrations, experiments, and other work;
+- participate in project polls and broader community conversation.
+
+Exploration belongs in Discussions. Once a problem or implementation task is concrete enough to track, it should move into a GitHub Issue and, when appropriate, a pull request.
+
 ## Contributing
 
 Contribution guidelines are available in **[CONTRIBUTING.md](CONTRIBUTING.md)**.
@@ -396,9 +411,3 @@ If the evidence is mixed, AECC should show that.
 If there is not enough evidence:
 
 **We don't know yet.**
-
-That is a valid result.
-
-## License
-
-Licensed under the Apache License 2.0.
