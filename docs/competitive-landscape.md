@@ -502,3 +502,285 @@ The less crowded problem is the one AECC has been moving toward:
 > **How does an organization convert messy, repeated, real-world AI performance evidence into a defensible decision about what an exact AI worker is allowed to do?**
 
 That is where AECC should concentrate its product identity and engineering discipline.
+
+---
+
+## 11. Selected university research relevant to AECC
+
+This section adds research from MIT, Stanford, UCLA, and Texas A&M that is directly useful to AECC's qualification, evaluation, and routing design. These are not included because of institutional prestige alone; each item is here because it changes or strengthens a concrete AECC design decision.
+
+### MIT
+
+#### 2025 AI Agent Index
+
+**Sources:**
+
+- https://aiagentindex.mit.edu/
+- https://arxiv.org/abs/2602.17753
+- https://doi.org/10.1145/3805689.3806728
+
+The 2025 AI Agent Index, with MIT-affiliated coauthors Stephen Casper and A. Pinar Ozisik, documents 30 prominent deployed agents across technical capabilities, autonomy, ecosystem interaction, safety, evaluation, and impact. One of its most relevant conclusions for AECC is that model-level evaluation is insufficient for agentic systems because downstream tools, scaffolding, autonomy, and deployment context materially shape system behavior. It also identifies a large transparency gap: many highly autonomous agents disclose little or no agent-specific safety evaluation.
+
+**AECC implication:**
+
+AECC's exact-worker identity should continue to include the surrounding agent system, not only the base model. Qualification should eventually capture autonomy level, tool permissions, and safety evidence as part of readiness, especially when authority increases.
+
+**Backlog candidate:**
+
+Add an **authority-risk dimension** to qualification policy so higher-autonomy workers require stronger evidence and safety checks before being granted broader execution authority.
+
+#### ABxLab / AI agents are sensitive to nudges
+
+**Sources:**
+
+- https://abxlab.media.mit.edu/
+- https://www.media.mit.edu/publications/ai-agents-are-sensitive-to-nudges/
+
+MIT Media Lab's ABxLab uses controlled modifications to the environment presented to an AI agent and measures how those changes alter decisions. The work shows that agent behavior can shift substantially when seemingly small environmental cues change.
+
+**AECC implication:**
+
+Qualification based only on one frozen task presentation may overstate robustness. Some capabilities should include perturbation testing: alternate wording, UI state, ordering, defaults, or environmental cues while preserving the underlying task.
+
+**Backlog candidate:**
+
+Add **robustness/perturbation variants** to selected qualification suites and distinguish ordinary repeated runs from controlled environment-variation runs.
+
+#### Science of scaling agent systems
+
+**Source:** https://www.media.mit.edu/projects/towards-a-science-of-scaling-agent-systems-when-and-why-agent-systems-work/overview/
+
+MIT Media Lab reports controlled evaluation across 180 agent configurations and finds that multi-agent coordination can improve performance on parallelizable tasks while degrading it on sequential tasks. The broader lesson is that system architecture itself is task-dependent.
+
+**AECC implication:**
+
+The future "AI team" recommendation layer should not assume that adding more agents or specialists is always beneficial. Team topology itself should become an evaluated configuration.
+
+**Backlog candidate:**
+
+Treat **agent-team architecture** as part of exact setup identity for multi-agent evaluations and require evidence before recommending multi-agent orchestration for a capability.
+
+### Stanford
+
+#### HELM and HELM Capabilities
+
+**Sources:**
+
+- https://crfm.stanford.edu/helm/
+- https://crfm.stanford.edu/helm/capabilities/
+
+Stanford CRFM's HELM emphasizes reproducible, transparent evaluation across scenarios, metrics, and models, with prompt-level transparency and reproducible results.
+
+**AECC implication:**
+
+AECC's public research path should expose enough item-level evidence that outsiders can inspect not only aggregate conclusions but the underlying evaluation instances, subject to privacy and safety constraints.
+
+#### Reliable and Efficient Amortized Model-Based Evaluation
+
+**Source:** https://crfm.stanford.edu/2025/06/04/reliable-and-efficient-evaluation.html
+
+Stanford researchers integrated Item Response Theory-based adaptive testing into HELM. Their work shows that model evaluation can be made substantially cheaper by selecting the most informative test items while preserving reliability.
+
+**AECC implication:**
+
+Qualification does not necessarily require running every test on every worker forever. Once AECC has enough calibration data, it may be possible to select tests adaptively while keeping evidence quality explicit.
+
+**Backlog candidate:**
+
+Investigate **adaptive qualification testing** and stopping rules after the basic repeated-run/evidence-sufficiency model is mature. Do not implement adaptive shortcuts before the full-test baseline is trustworthy.
+
+#### Deployment Decision Reliability
+
+**Sources:**
+
+- https://aimslab.stanford.edu/cs321m
+- https://arxiv.org/abs/2608.11323
+
+A Stanford AIMS project applies Generalizability Theory to long-horizon agent benchmarks and reports that the agent main effect accounts for less than 3% of variance in the analyzed datasets while agent-by-task interaction accounts for substantially more. Its central warning is that aggregate leaderboards can look like measures of universal capability when they are often measuring specialization and task interaction.
+
+**AECC implication:**
+
+This strongly supports capability-specific qualification rather than a single global model rank. It also argues for reporting evidence sufficiency and reliability at the capability/task-family level.
+
+**Backlog candidate:**
+
+When AECC has enough repeated data, evaluate whether a **variance-decomposition / generalizability analysis** can inform the number and diversity of tasks required before a qualification claim is defensible.
+
+#### Measurement Data Bank
+
+**Source:** https://aimslab.stanford.edu/measurement-db
+
+Stanford's Measurement Data Bank focuses on item-level AI measurement data: what a system was tested on, how it responded, and how each response was scored.
+
+**AECC implication:**
+
+This is relevant to the Evidence Producer Adapter. AECC should prefer item-level evidence exchange over importing only final aggregate scores.
+
+### UCLA
+
+#### PM-Bench: Evaluating Prospective Memory in LLM Agents
+
+**Sources:**
+
+- https://arxiv.org/abs/2607.12385
+- https://samueli.ucla.edu/people/67993/
+
+PM-Bench, by UCLA researchers Genglin Liu and Saadia Gabriel, evaluates prospective memory: whether an agent can preserve and execute delayed intentions while other work continues. It evaluates eight models under eight agent configurations; even the strongest reported setup reaches only 65.1% F1.
+
+**AECC implication:**
+
+Long-horizon reliability is not captured by ordinary one-shot coding tasks. A worker can be strong at immediate implementation while weak at remembering deferred obligations or responding correctly to later state changes.
+
+**Backlog candidate:**
+
+Create a future **long-horizon / deferred-obligation capability family** for agents expected to maintain commitments across multi-step workflows.
+
+#### Preference Leakage in LLM-as-a-Judge
+
+**Sources:**
+
+- https://arxiv.org/abs/2502.01534
+- https://llm-as-a-judge.github.io/
+
+This ICLR 2026 work, which includes UCLA affiliation, finds that LLM judges can systematically favor outputs from related model families, including the same model, inherited models, or related families. That creates a contamination channel in automated evaluation.
+
+**AECC implication:**
+
+If AECC adds LLM-based scoring, evaluator identity must include model family/provenance, and judge independence should be part of the evaluation policy rather than an implementation afterthought.
+
+**Backlog candidate:**
+
+Define an **LLM-judge independence policy** before automated scoring is introduced: record judge model identity, prohibit or flag same-family judge/subject pairings where appropriate, and preserve human or deterministic verification paths for consequential qualification decisions.
+
+#### Rethinking Creativity Evaluation
+
+**Source:** https://aclanthology.org/2026.eacl-long.297/
+
+UCLA-affiliated authors show that common creativity metrics, including LLM-as-a-Judge, can disagree across domains and can be sensitive to small prompt variations and label biases.
+
+**AECC implication:**
+
+Evaluation instruments should be capability-specific. A metric that works for one kind of task should not silently become the scoring standard for another.
+
+**Backlog candidate:**
+
+Require each capability family to declare its **evaluation instrument and validity assumptions**, rather than relying on a universal scoring mechanism.
+
+#### UCLA uncertainty and distribution-shift work
+
+**Source:** https://dts.ucla.edu/initiatives/ai/pilot-projects
+
+A UCLA AI pilot describes using conformal prediction and real-time monitoring to quantify uncertainty and detect distribution shift in VLM-based robot motion planning, with human feedback after execution.
+
+**AECC implication:**
+
+Qualification should not be treated as permanent if the operating environment changes materially. The evidence that justified authority can go stale.
+
+**Backlog candidate:**
+
+Design a future **qualification freshness / drift policy** that can lower confidence, trigger re-evaluation, or suspend authority when the deployment distribution or worker configuration changes materially.
+
+### Texas A&M
+
+#### AgentFlow — Stanford + Texas A&M
+
+**Source:** https://agentflow.stanford.edu/
+
+AgentFlow is a Stanford/Texas A&M collaboration accepted as an ICLR 2026 Oral. It studies in-the-flow optimization of agentic systems across diverse benchmarks, reinforcing that agent-system configuration and orchestration can matter as much as base-model choice.
+
+**AECC implication:**
+
+Evidence identity should eventually extend naturally from a single harness/model setup to richer agentic system configurations. Qualification should be attached to the system actually used, not retroactively attributed to the underlying model.
+
+**Backlog candidate:**
+
+Extend the future Evidence Producer Adapter schema so it can represent **multi-component agent systems** without flattening them into one model identifier.
+
+#### Grounded engineering agents and benchmark development
+
+**Source:** https://news.engineering.tamu.edu/news/2026/09/07/texas-am-researchers-develop-ai-tools-for-a-changing-power-grid/
+
+Texas A&M researchers describe Grid Agent and Circuit AI as systems that combine LLM reasoning with trusted engineering software, validated calculations, and specialized data rather than accepting model-generated answers by themselves. The team is also developing standardized benchmark tasks for evaluating such systems.
+
+**AECC implication:**
+
+For verifiable engineering domains, deterministic or domain-tool verification should outrank LLM opinion whenever possible. This aligns directly with AECC's principle that exit code 0 is not task success and that machine-checkable evidence should be preferred over unsupported model judgment.
+
+**Backlog candidate:**
+
+Create a verifier hierarchy for test definitions: **deterministic/domain-tool checks first, attributed human judgment second when needed, LLM judge only where appropriate and explicitly identified.**
+
+#### LLM-as-a-judge bias study
+
+**Source:** https://ugr.tamu.edu/_files/_documents/2526urssymposiumabstractbook.pdf
+
+A 2026 Texas A&M undergraduate research project tested prompt-based bias mechanisms in LLM-as-a-Judge evaluation using more than 540 objective and 20 semi-objective pairwise evaluations. It found generally high accuracy but still observed answer flips, mechanism-specific weaknesses, and early evidence of order sensitivity.
+
+**AECC implication:**
+
+This is weaker evidence than a peer-reviewed publication, but it points in the same direction as the stronger UCLA preference-leakage and evaluation-robustness work: automated judges should be treated as measurement instruments with failure modes, not as ground truth.
+
+### Cross-university synthesis
+
+Taken together, these university results strengthen AECC in six specific ways:
+
+1. **System identity over model identity.** MIT, Stanford, UCLA, and Texas A&M work all provide examples where agent configuration, task interaction, orchestration, or environment changes measured behavior.
+2. **Capability-specific qualification over global ranking.** Stanford's reliability work and UCLA's domain-sensitive evaluation results argue strongly against collapsing performance into one universal model score.
+3. **Measurement instruments need qualification too.** UCLA and Texas A&M work on LLM judges reinforces AECC's decision to preserve evaluator identity and measure rubric/judge reliability.
+4. **Authority should scale with evidence and risk.** MIT's Agent Index highlights increasing autonomy and weak safety disclosure, supporting stronger qualification bars for higher-authority workers.
+5. **Qualification can decay.** UCLA's distribution-shift work suggests that evidence sufficiency should eventually include freshness and deployment drift.
+6. **Execution architecture itself can be a capability variable.** MIT's multi-agent scaling work and Stanford/Texas A&M's AgentFlow both support evaluating the full system configuration rather than assigning success to a base model alone.
+
+### New backlog candidates from the university review
+
+These are additions to the backlog candidates above, not commitments to build immediately:
+
+#### L. Authority-risk tiers
+
+Require stronger evidence, safety verification, and intervention history before granting workers higher-autonomy or higher-impact authority.
+
+#### M. Robustness / perturbation test variants
+
+Add controlled environment, wording, ordering, or UI-state perturbations to selected qualification suites.
+
+#### N. Adaptive qualification testing research
+
+After a trustworthy full-suite baseline exists, study IRT/adaptive-testing methods to reduce evaluation cost without hiding evidence loss.
+
+#### O. LLM-judge independence policy
+
+Record judge provenance and explicitly manage same-model/same-family contamination risk.
+
+#### P. Long-horizon / prospective-memory capability pack
+
+Add tests for deferred obligations, latent state changes, and commitments that must survive intervening work.
+
+#### Q. Qualification freshness and drift
+
+Define when previously earned authority should be revalidated because the worker, harness, tools, environment, or workload distribution changed.
+
+#### R. Verification hierarchy
+
+Prefer deterministic and domain-tool verification where available; preserve human judgment explicitly; use LLM judges only as attributed instruments with known limitations.
+
+#### S. Multi-agent setup identity
+
+Represent team topology, component models, roles, coordination mechanism, and configuration as part of the evaluated worker identity when AECC begins qualifying AI teams.
+
+### University research sources
+
+- MIT AI Agent Index — https://aiagentindex.mit.edu/
+- MIT 2025 AI Agent Index paper — https://arxiv.org/abs/2602.17753
+- MIT ABxLab — https://abxlab.media.mit.edu/
+- MIT agent-systems scaling project — https://www.media.mit.edu/projects/towards-a-science-of-scaling-agent-systems-when-and-why-agent-systems-work/overview/
+- Stanford HELM — https://crfm.stanford.edu/helm/
+- Stanford reliable/efficient evaluation — https://crfm.stanford.edu/2025/06/04/reliable-and-efficient-evaluation.html
+- Stanford Deployment Decision Reliability — https://arxiv.org/abs/2608.11323
+- Stanford Measurement Data Bank — https://aimslab.stanford.edu/measurement-db
+- UCLA PM-Bench — https://arxiv.org/abs/2607.12385
+- UCLA-affiliated Preference Leakage — https://arxiv.org/abs/2502.01534
+- UCLA-affiliated creativity-evaluation study — https://aclanthology.org/2026.eacl-long.297/
+- UCLA uncertainty/distribution-shift pilot — https://dts.ucla.edu/initiatives/ai/pilot-projects
+- Stanford/Texas A&M AgentFlow — https://agentflow.stanford.edu/
+- Texas A&M grounded engineering agents — https://news.engineering.tamu.edu/news/2026/09/07/texas-am-researchers-develop-ai-tools-for-a-changing-power-grid/
+- Texas A&M LLM-judge bias study — https://ugr.tamu.edu/_files/_documents/2526urssymposiumabstractbook.pdf
