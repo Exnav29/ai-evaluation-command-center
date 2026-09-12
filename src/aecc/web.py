@@ -268,7 +268,7 @@ def create_app(engine=None) -> FastAPI:
 
     @app.get("/", include_in_schema=False)
     def root():
-        return RedirectResponse(url="/operator", status_code=307)
+        return RedirectResponse(url="/home", status_code=307)
 
     @app.get("/operator", response_class=HTMLResponse)
     def operator_overview(request: Request, session: Session = Depends(get_session)):

@@ -91,7 +91,7 @@ def test_containment_rejects_workspace_inside_repo():
         assert err is not None and "inside the AECC repository" in err, candidate
 
 
-def test_root_redirects_to_operator(tmp_path):
+def test_root_redirects_to_home(tmp_path):
     import sqlalchemy as sa
     from alembic import command
     from alembic.config import Config
@@ -111,6 +111,6 @@ def test_root_redirects_to_operator(tmp_path):
         client = TestClient(app, follow_redirects=False)
         response = client.get("/")
         assert response.status_code in (301, 302, 303, 307, 308)
-        assert response.headers["location"] == "/operator"
+        assert response.headers["location"] == "/home"
     finally:
         engine.dispose()
