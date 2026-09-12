@@ -63,11 +63,16 @@ TEMPLATES_DIR = HERE / "templates"
 STATIC_DIR = HERE / "static"
 
 
+def _get_repo_root() -> Path:
+    """Return the AECC repository root (``src/aecc`` -> parents[1])."""
+    return HERE.parents[1] if len(HERE.parents) >= 2 else Path.cwd()
+
+
 def _default_db_path() -> Path:
     override = os.environ.get("AECC_DB_PATH")
     if override:
         return Path(override)
-    root = HERE.parents[2] if len(HERE.parents) >= 3 else Path.cwd()
+    root = _get_repo_root()
     candidate = root / "data" / "evaluations.sqlite"
     if candidate.parent.exists() or root.name != "/":
         return candidate
@@ -78,7 +83,7 @@ def _ensure_migrated(db_path: Path) -> None:
     from alembic import command
     from alembic.config import Config
 
-    root = HERE.parents[2] if len(HERE.parents) >= 3 else Path.cwd()
+    root = _get_repo_root()
     ini = root / "alembic.ini"
     if not ini.exists():
         ini = Path.cwd() / "alembic.ini"
@@ -260,6 +265,10 @@ def create_app(engine=None) -> FastAPI:
 
     if STATIC_DIR.exists():
         app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
+
+    @app.get("/", include_in_schema=False)
+    def root():
+        return RedirectResponse(url="/operator", status_code=307)
 
     @app.get("/operator", response_class=HTMLResponse)
     def operator_overview(request: Request, session: Session = Depends(get_session)):
